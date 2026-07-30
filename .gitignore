@@ -1,0 +1,27 @@
+# Dependencies
+**/node_modules/
+
+# Build
+**/dist/
+**/coverage/
+
+# Environment
+.env
+.env.*
+
+# Logs
+*.log
+
+# VS Code (mantém configurações pessoais fora do Git)
+.vscode/
+
+# Sistema Operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos compactados
+*.zip
+
+backend/.agents/
+backend/.claude/
+backend/.windsurf/

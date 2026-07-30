@@ -1,0 +1,234 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  RECEPTION
+  TEACHER
+}
+
+model Person {
+  id        Int       @id @default(autoincrement())
+  name      String
+  cpf       String    @unique
+  email     String    @unique
+  phone     String?
+  createdAt DateTime  @default(now())
+
+  students  Student[]
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  password  String
+  role      UserRole
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+
+  classes Class[]
+}
+
+enum StudentStatus {
+  ACTIVE
+  PAUSED
+  INACTIVE
+}
+
+enum StudentModalityStatus {
+  ACTIVE
+  PAUSED
+  FINISHED
+}
+
+model Student {
+  id               Int           @id @default(autoincrement())
+  personId         Int           @unique
+  enrollmentNumber String        @unique
+  status           StudentStatus
+  joinedAt         DateTime
+  notes            String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  modalities StudentModality[]
+  plans      StudentPlan[]
+  attendances Attendance[]
+  studentClasses StudentClass[]
+  charges    Charge[]
+  person     Person           @relation(fields: [personId], references: [id])
+}
+
+model Modality {
+  id            Int      @id @default(autoincrement())
+  name          String   @unique
+  description   String
+  hasGraduation Boolean
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  studentModalities StudentModality[]
+  classes           Class[]
+}
+
+model Plan {
+  id            Int      @id @default(autoincrement())
+  name          String   @unique
+  description   String
+  price         Decimal
+  weeklyClasses Int
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  studentPlans StudentPlan[]
+  charges      Charge[]
+}
+
+enum StudentPlanStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+  FINISHED
+}
+
+model StudentPlan {
+  id           Int               @id @default(autoincrement())
+  studentId    Int
+  planId       Int
+  startDate    DateTime
+  endDate      DateTime?
+  monthlyPrice Decimal
+  billingDay   Int
+  status       StudentPlanStatus
+  notes        String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id])
+  plan    Plan    @relation(fields: [planId], references: [id])
+}
+
+model Class {
+  id            Int      @id @default(autoincrement())
+  name          String
+  modalityId    Int
+  teacherUserId Int
+  weekDays      String[]
+  startTime     String
+  endTime       String
+  capacity      Int
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  modality Modality @relation(fields: [modalityId], references: [id])
+  teacher  User     @relation(fields: [teacherUserId], references: [id])
+
+  attendances Attendance[]
+  studentClasses StudentClass[]
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  JUSTIFIED
+}
+
+model Attendance {
+  id             Int              @id @default(autoincrement())
+  classId        Int
+  studentId      Int
+  attendanceDate DateTime
+  status         AttendanceStatus
+  notes          String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  class   Class   @relation(fields: [classId], references: [id])
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@unique([classId, studentId, attendanceDate])
+  @@index([classId, studentId, attendanceDate])
+}
+
+model StudentClass {
+  id        Int      @id @default(autoincrement())
+  studentId Int
+  classId   Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id])
+  class   Class   @relation(fields: [classId], references: [id])
+
+  @@unique([studentId, classId])
+  @@index([studentId, classId])
+}
+
+enum ChargeType {
+  ENROLLMENT_FEE
+  MONTHLY_FEE
+  PRIVATE_CLASS
+  PRODUCT
+  EVENT
+  GRADUATION_EXAM
+  OTHER
+}
+
+enum ChargeStatus {
+  PENDING
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  CANCELLED
+  REFUNDED
+}
+
+model Charge {
+  id              Int          @id @default(autoincrement())
+  studentId       Int
+  planId          Int?
+  type            ChargeType
+  description     String
+  originalAmount  Decimal
+  discountAmount  Decimal      @default(0)
+  finalAmount     Decimal
+  dueDate         DateTime
+  referenceMonth  String
+  status          ChargeStatus @default(PENDING)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id])
+  plan    Plan?   @relation(fields: [planId], references: [id])
+
+  @@unique([studentId, type, referenceMonth])
+  @@index([studentId, status])
+}
+
+model StudentModality {
+  id         Int                    @id @default(autoincrement())
+  studentId  Int
+  modalityId Int
+  startedAt  DateTime
+  status     StudentModalityStatus
+  notes      String?
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
+
+  student Student  @relation(fields: [studentId], references: [id])
+  modality Modality @relation(fields: [modalityId], references: [id])
+
+  @@unique([studentId, modalityId])
+}
