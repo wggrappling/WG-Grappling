@@ -1,10 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
 import { StudentPlanService } from './student-plan.service';
 import { CreateStudentPlanDto } from './dto/create-student-plan.dto';
 import { UpdateStudentPlanDto } from './dto/update-student-plan.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @ApiTags('StudentPlan')
+@UseGuards(JwtAuthGuard)
 @Controller('student-plan')
 export class StudentPlanController {
   constructor(private readonly studentPlanService: StudentPlanService) {}
