@@ -1,19 +1,17 @@
-import type { StudentDocumentStatus } from '../../mocks/studentDocuments';
+import type { DocumentStatus } from '../../types';
 
 type DocumentStatusBadgeProps = {
-  status: StudentDocumentStatus;
+  status: DocumentStatus;
 };
 
-const statusClassNames: Record<StudentDocumentStatus, string> = {
-  Pendente: 'pending',
-  Aprovado: 'approved',
-  Rejeitado: 'rejected',
+const statusDetails: Record<DocumentStatus, { className: string; label: string }> = {
+  ACTIVE: { className: 'approved', label: 'Ativo' },
+  ARCHIVED: { className: 'pending', label: 'Arquivado' },
+  DELETED: { className: 'rejected', label: 'Excluído' },
 };
 
 export function DocumentStatusBadge({ status }: DocumentStatusBadgeProps) {
-  return (
-    <span className={`document-status ${statusClassNames[status]}`}>
-      {status}
-    </span>
-  );
+  const details = statusDetails[status];
+
+  return <span className={`document-status ${details.className}`}>{details.label}</span>;
 }

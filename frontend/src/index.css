@@ -720,6 +720,35 @@ h1 {
   box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
 }
 
+.documents-state {
+  display: grid;
+  min-height: 230px;
+  padding: 40px 24px;
+  place-items: center;
+  align-content: center;
+  gap: 9px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.documents-state strong {
+  color: var(--navy);
+}
+
+.documents-state p {
+  margin: 0;
+  font-size: 0.84rem;
+}
+
+.documents-state-error strong {
+  color: #b91c1c;
+}
+
+.add-document-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .documents-table-scroll {
   overflow-x: auto;
 }

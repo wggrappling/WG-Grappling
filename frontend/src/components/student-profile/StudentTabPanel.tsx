@@ -12,7 +12,7 @@ type StudentTabPanelProps = {
 
 export function StudentTabPanel({ activeTab, student }: StudentTabPanelProps) {
   if (activeTab === 'Perfil') return <StudentProfileTab student={student} />;
-  if (activeTab === 'Documentos') return <StudentDocumentsTab />;
+  if (activeTab === 'Documentos') return <StudentDocumentsTab studentId={student.id} />;
   if (activeTab === 'Financeiro') return <StudentFinancialTab />;
   if (activeTab === 'Histórico') return <StudentHistoryTab />;
 
