@@ -1,8 +1,11 @@
-import type { FinancialSummaryItem } from '../../mocks/studentFinancial';
+export type FinancialSummaryItem = {
+  label: string;
+  value: string;
+  detail: string;
+  tone: 'primary' | 'neutral' | 'success' | 'warning';
+};
 
-type FinancialSummaryCardProps = FinancialSummaryItem;
-
-export function FinancialSummaryCard({ label, value, detail, tone }: FinancialSummaryCardProps) {
+export function FinancialSummaryCard({ label, value, detail, tone }: FinancialSummaryItem) {
   return (
     <article className={`financial-summary-card ${tone}`}>
       <span className="financial-summary-label">{label}</span>

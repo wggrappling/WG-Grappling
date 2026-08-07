@@ -7,3 +7,4 @@ export type {
   DocumentUploader,
   StudentDocument,
 } from './document';
+export type { Charge, ChargePlan, ChargeStatus, ChargeType } from './charge';

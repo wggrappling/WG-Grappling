@@ -1,15 +1,19 @@
-import type { FinancialStatus } from '../../mocks/studentFinancial';
+import type { ChargeStatus } from '../../types';
 
 type FinancialStatusBadgeProps = {
-  status: FinancialStatus;
+  status: ChargeStatus;
 };
 
-const statusClassNames: Record<FinancialStatus, string> = {
-  Pago: 'paid',
-  Pendente: 'pending',
-  Atrasado: 'overdue',
+const statusDetails: Record<ChargeStatus, { className: string; label: string }> = {
+  PENDING: { className: 'pending', label: 'Pendente' },
+  PARTIALLY_PAID: { className: 'pending', label: 'Parcialmente pago' },
+  PAID: { className: 'paid', label: 'Pago' },
+  OVERDUE: { className: 'overdue', label: 'Atrasado' },
+  CANCELLED: { className: 'cancelled', label: 'Cancelado' },
+  REFUNDED: { className: 'refunded', label: 'Reembolsado' },
 };
 
 export function FinancialStatusBadge({ status }: FinancialStatusBadgeProps) {
-  return <span className={`financial-status ${statusClassNames[status]}`}>{status}</span>;
+  const details = statusDetails[status];
+  return <span className={`financial-status ${details.className}`}>{details.label}</span>;
 }
