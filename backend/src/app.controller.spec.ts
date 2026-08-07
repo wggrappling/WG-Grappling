@@ -15,8 +15,13 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    it('should return the API information payload', () => {
+      expect(appController.getHello()).toEqual({
+        name: 'WG Grappling API',
+        version: '1.0.0',
+        status: 'online',
+        message: 'Bem-vindo à API da WG Grappling!',
+      });
     });
   });
 });

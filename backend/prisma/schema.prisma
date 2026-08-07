@@ -23,7 +23,25 @@ model Person {
   phone     String?
   createdAt DateTime  @default(now())
 
-  students  Student[]
+  students Student[]
+  address  Address?
+}
+
+model Address {
+  id          Int      @id @default(autoincrement())
+  personId    Int      @unique
+  street      String
+  number      String?
+  complement  String?
+  neighborhood String
+  city        String
+  state       String
+  zipCode     String
+  country     String   @default("Brasil")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  person Person @relation(fields: [personId], references: [id])
 }
 
 model User {
@@ -35,7 +53,8 @@ model User {
   active    Boolean   @default(true)
   createdAt DateTime  @default(now())
 
-  classes Class[]
+  classes          Class[]
+  uploadedDocuments Document[] @relation("UploadedDocuments")
 }
 
 enum StudentStatus {
@@ -50,6 +69,21 @@ enum StudentModalityStatus {
   FINISHED
 }
 
+enum DocumentType {
+  PHOTO
+  MEDICAL_CERTIFICATE
+  CONTRACT
+  CERTIFICATE
+  LGPD
+  OTHER
+}
+
+enum DocumentStatus {
+  ACTIVE
+  ARCHIVED
+  DELETED
+}
+
 model Student {
   id               Int           @id @default(autoincrement())
   personId         Int           @unique
@@ -60,12 +94,63 @@ model Student {
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
 
-  modalities StudentModality[]
-  plans      StudentPlan[]
-  attendances Attendance[]
+  modalities     StudentModality[]
+  plans          StudentPlan[]
+  attendances    Attendance[]
   studentClasses StudentClass[]
-  charges    Charge[]
-  person     Person           @relation(fields: [personId], references: [id])
+  charges        Charge[]
+  responsibles   StudentResponsible[]
+  documents      Document[]
+  person         Person              @relation(fields: [personId], references: [id])
+}
+
+model Document {
+  id           Int            @id @default(autoincrement())
+  studentId    Int
+  type         DocumentType
+  fileName     String
+  originalName String
+  mimeType     String
+  extension    String
+  size         Int
+  storagePath  String
+  status       DocumentStatus @default(ACTIVE)
+  uploadedBy   Int
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  uploader User    @relation("UploadedDocuments", fields: [uploadedBy], references: [id], onDelete: Restrict)
+
+  @@unique([studentId, fileName, storagePath])
+  @@index([studentId, status])
+  @@index([studentId, type])
+}
+
+model Responsible {
+  id          Int      @id @default(autoincrement())
+  name        String
+  cpf         String   @unique
+  email       String?
+  phone       String?
+  relationship String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  students StudentResponsible[]
+}
+
+model StudentResponsible {
+  id            Int      @id @default(autoincrement())
+  studentId     Int
+  responsibleId Int
+  createdAt     DateTime @default(now())
+
+  student     Student     @relation(fields: [studentId], references: [id])
+  responsible Responsible @relation(fields: [responsibleId], references: [id])
+
+  @@unique([studentId, responsibleId])
+  @@index([studentId, responsibleId])
 }
 
 model Modality {

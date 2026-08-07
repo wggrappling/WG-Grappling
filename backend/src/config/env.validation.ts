@@ -1,0 +1,21 @@
+import * as Joi from 'joi';
+
+export const envValidationSchema = Joi.object({
+  DATABASE_URL: Joi.string().uri({ scheme: ['postgresql', 'postgres'] }).required().messages({
+    'string.uri': 'DATABASE_URL deve ser uma URL válida.',
+    'any.required': 'A variável de ambiente DATABASE_URL é obrigatória.',
+  }),
+  JWT_SECRET: Joi.string().min(32).required().messages({
+    'string.min': 'JWT_SECRET deve ter no mínimo 32 caracteres.',
+    'any.required': 'A variável de ambiente JWT_SECRET é obrigatória.',
+  }),
+  PORT: Joi.number().port().required().messages({
+    'number.base': 'PORT deve ser um número válido.',
+    'number.port': 'PORT deve ser uma porta válida.',
+    'any.required': 'A variável de ambiente PORT é obrigatória.',
+  }),
+  REDIS_URL: Joi.string().uri().optional().messages({
+    'string.uri': 'REDIS_URL deve ser uma URL válida quando configurada.',
+  }),
+  NODE_ENV: Joi.string().valid('development', 'production', 'test', 'local').default('development'),
+}).required();

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PeopleModule } from './people/people.module';
@@ -15,9 +16,40 @@ import { AttendanceModule } from './attendance/attendance.module';
 import { EnrollmentModule } from './enrollment/enrollment.module';
 import { StudentClassModule } from './student-class/student-class.module';
 import { ChargeModule } from './charge/charge.module';
+import { AddressModule } from './address/address.module';
+import { ResponsibleModule } from './responsible/responsible.module';
+import { DocumentsModule } from './documents/documents.module';
+import { envValidationSchema } from './config/env.validation';
 
 @Module({
-  imports: [PeopleModule, PrismaModule, UsersModule, AuthModule, StudentsModule, ModalityModule, StudentModalityModule, PlansModule, StudentPlanModule, ClassModule, AttendanceModule, EnrollmentModule, StudentClassModule, ChargeModule],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['.env', '.env.local'],
+      validationSchema: envValidationSchema,
+      validationOptions: {
+        allowUnknown: false,
+        abortEarly: true,
+      },
+    }),
+    PeopleModule,
+    PrismaModule,
+    UsersModule,
+    AuthModule,
+    StudentsModule,
+    ModalityModule,
+    StudentModalityModule,
+    PlansModule,
+    StudentPlanModule,
+    ClassModule,
+    AttendanceModule,
+    EnrollmentModule,
+    StudentClassModule,
+    ChargeModule,
+    AddressModule,
+    ResponsibleModule,
+    DocumentsModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
