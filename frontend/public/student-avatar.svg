@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-labelledby="title description">
+  <title id="title">Foto ilustrativa do aluno</title>
+  <desc id="description">Retrato estilizado de um aluno de artes marciais</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#dbeafe"/>
+      <stop offset="1" stop-color="#64748b"/>
+    </linearGradient>
+    <linearGradient id="gi" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#cbd5e1"/>
+    </linearGradient>
+  </defs>
+  <rect width="240" height="240" fill="url(#background)"/>
+  <circle cx="120" cy="88" r="46" fill="#b77952"/>
+  <path d="M75 82c3-38 24-57 49-57 27 0 46 21 45 55-13-7-23-19-27-31-12 19-34 31-67 33Z" fill="#172033"/>
+  <path d="M83 103c9 19 22 29 37 29 16 0 29-10 38-29-5 32-18 49-38 49-19 0-32-17-37-49Z" fill="#9a5f43" opacity=".45"/>
+  <circle cx="103" cy="91" r="3.5" fill="#172033"/>
+  <circle cx="139" cy="91" r="3.5" fill="#172033"/>
+  <path d="M109 111c8 6 16 6 24 0" fill="none" stroke="#713f2d" stroke-width="4" stroke-linecap="round"/>
+  <path d="M27 240c5-61 38-94 93-94s88 33 93 94H27Z" fill="url(#gi)"/>
+  <path d="m79 157 41 50 41-50 18 15-31 68H92l-31-68 18-15Z" fill="#e2e8f0"/>
+  <path d="m105 146 15 61 15-61" fill="none" stroke="#1d4ed8" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M74 215h92" stroke="#1d4ed8" stroke-width="12" stroke-linecap="round"/>
+</svg>
