@@ -5,6 +5,7 @@ import { ChargeGeneratorService } from './charge-generator.service';
 import { CreateChargeDto } from './dto/create-charge.dto';
 import { UpdateChargeDto } from './dto/update-charge.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CreatePaymentDto } from './dto/create-payment.dto';
 
 @ApiTags('Charges')
 @UseGuards(JwtAuthGuard)
@@ -28,6 +29,19 @@ export class ChargeController {
   @ApiResponse({ status: 200, description: 'Cobrança retornada com sucesso.' })
   findOne(@Param('id') id: string) {
     return this.chargeService.findOne(Number(id));
+  }
+
+  @Get(':id/payments')
+  @ApiOperation({ summary: 'Listar pagamentos de uma cobrança' })
+  findPayments(@Param('id') id: string) {
+    return this.chargeService.findPayments(Number(id));
+  }
+
+  @Post(':id/payments')
+  @ApiOperation({ summary: 'Registrar pagamento manual de uma cobrança' })
+  @ApiBody({ type: CreatePaymentDto })
+  registerPayment(@Param('id') id: string, @Body() dto: CreatePaymentDto) {
+    return this.chargeService.registerPayment(Number(id), dto);
   }
 
   @Post()

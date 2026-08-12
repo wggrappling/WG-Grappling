@@ -26,6 +26,10 @@ export type ChargePlan = {
   updatedAt: string;
 };
 
+export type PaymentMethod = 'PIX' | 'CASH' | 'TRANSFER';
+export type Payment = { id: number; chargeId: number; amount: string | number; paidAt: string; method: PaymentMethod; reference: string | null; createdAt: string; updatedAt: string };
+export type CreatePayment = { amount: number; paidAt: string; method: PaymentMethod; reference?: string };
+
 export type Charge = {
   id: number;
   studentId: number;
@@ -41,4 +45,7 @@ export type Charge = {
   createdAt: string;
   updatedAt: string;
   plan: ChargePlan | null;
+  payments: Payment[];
+  totalPaid: number;
+  balance: number;
 };

@@ -1,11 +1,20 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ChargeStatus } from '../../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateChargeDto } from './dto/create-charge.dto';
+import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdateChargeDto } from './dto/update-charge.dto';
+
+const chargeInclude = { student: true, plan: true, payments: { orderBy: { paidAt: 'desc' as const } } };
 
 @Injectable()
 export class ChargeService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private withTotals<T extends { finalAmount: unknown; payments: Array<{ amount: unknown }> }>(charge: T) {
+    const totalPaid = charge.payments.reduce((total, payment) => total + Number(payment.amount), 0);
+    return { ...charge, totalPaid, balance: Math.max(0, Number(charge.finalAmount) - totalPaid) };
+  }
 
   async findAll(studentId?: number) {
     if (studentId !== undefined && (!Number.isInteger(studentId) || studentId <= 0)) {
@@ -13,63 +22,64 @@ export class ChargeService {
     }
     const charges = await this.prisma.charge.findMany({
       where: studentId === undefined ? undefined : { studentId },
-      include: {
-        student: true,
-        plan: true,
-      },
+      include: chargeInclude,
     });
-
-    return {
-      module: 'Charges',
-      total: charges.length,
-      data: charges,
-    };
+    return { module: 'Charges', total: charges.length, data: charges.map((charge) => this.withTotals(charge)) };
   }
 
   async findOne(id: number) {
-    return this.prisma.charge.findUnique({
-      where: { id },
-      include: {
-        student: true,
-        plan: true,
-      },
-    });
+    const charge = await this.prisma.charge.findUnique({ where: { id }, include: chargeInclude });
+    return charge ? this.withTotals(charge) : null;
   }
 
-  async create(createChargeDto: CreateChargeDto) {
+  async findPayments(id: number) {
+    const charge = await this.prisma.charge.findUnique({ where: { id }, select: { id: true } });
+    if (!charge) throw new NotFoundException(`Cobrança com id ${id} não encontrada.`);
+    return this.prisma.payment.findMany({ where: { chargeId: id }, orderBy: { paidAt: 'desc' } });
+  }
+
+  async registerPayment(id: number, dto: CreatePaymentDto) {
+    return this.prisma.$transaction(async (tx) => {
+      const charge = await tx.charge.findUnique({ where: { id }, include: { payments: true } });
+      if (!charge) throw new NotFoundException(`Cobrança com id ${id} não encontrada.`);
+      if (charge.status === ChargeStatus.CANCELLED || charge.status === ChargeStatus.REFUNDED) {
+        throw new ConflictException('Cobrança cancelada ou estornada não pode receber pagamento.');
+      }
+
+      const totalPaid = charge.payments.reduce((total, payment) => total + Number(payment.amount), 0);
+      const balance = Number(charge.finalAmount) - totalPaid;
+      if (balance <= 0 || charge.status === ChargeStatus.PAID) {
+        throw new ConflictException('Cobrança já está quitada.');
+      }
+      if (dto.amount > balance) throw new BadRequestException('Pagamento não pode exceder o saldo da cobrança.');
+
+      const payment = await tx.payment.create({
+        data: { chargeId: id, amount: dto.amount, method: dto.method, paidAt: new Date(dto.paidAt), reference: dto.reference },
+      });
+      const updatedTotalPaid = totalPaid + dto.amount;
+      const status = updatedTotalPaid >= Number(charge.finalAmount) ? ChargeStatus.PAID : ChargeStatus.PARTIALLY_PAID;
+      await tx.charge.update({ where: { id }, data: { status } });
+
+      return {
+        message: status === ChargeStatus.PAID ? 'Pagamento registrado e cobrança quitada.' : 'Pagamento parcial registrado.',
+        data: { payment, chargeId: id, total: Number(charge.finalAmount), totalPaid: updatedTotalPaid, balance: Number(charge.finalAmount) - updatedTotalPaid, status },
+      };
+    }, { isolationLevel: 'Serializable' });
+  }
+
+  async create(dto: CreateChargeDto) {
     return this.prisma.charge.create({
-      data: {
-        ...createChargeDto,
-        originalAmount: createChargeDto.originalAmount,
-        discountAmount: createChargeDto.discountAmount ?? 0,
-        finalAmount: createChargeDto.finalAmount,
-        referenceMonth: createChargeDto.referenceMonth,
-      },
-      include: {
-        student: true,
-        plan: true,
-      },
+      data: { ...dto, originalAmount: dto.originalAmount, discountAmount: dto.discountAmount ?? 0, finalAmount: dto.finalAmount, referenceMonth: dto.referenceMonth },
+      include: chargeInclude,
     });
   }
 
-  async update(id: number, updateChargeDto: UpdateChargeDto) {
-    return this.prisma.charge.update({
-      where: { id },
-      data: updateChargeDto,
-      include: {
-        student: true,
-        plan: true,
-      },
-    });
+  async update(id: number, dto: UpdateChargeDto) {
+    return this.prisma.charge.update({ where: { id }, data: dto, include: chargeInclude });
   }
 
   async remove(id: number) {
-    await this.prisma.charge.delete({
-      where: { id },
-    });
-
-    return {
-      message: 'Cobrança removida com sucesso!',
-    };
+    await this.prisma.charge.delete({ where: { id } });
+    return { message: 'Cobrança removida com sucesso!' };
   }
 }

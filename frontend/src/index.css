@@ -343,6 +343,17 @@ button {
 
 @media (max-width: 680px) { .form-grid { grid-template-columns: 1fr; } .students-header-actions { align-items: flex-end; flex-direction: column; } }
 
+.financial-success { margin: 0 0 18px; padding: 12px 14px; color: #166534; background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 9px; }
+.financial-table td small { display: block; margin-top: 4px; color: var(--muted); }
+.payment-entry { min-width: 220px; margin: 3px 0; font-size: .72rem; }
+.payment-modal-backdrop { position: fixed; z-index: 20; inset: 0; display: grid; padding: 20px; place-items: center; background: rgba(15,23,42,.6); }
+.payment-modal { display: flex; width: min(100%, 440px); padding: 28px; flex-direction: column; gap: 15px; background: #fff; border-radius: 16px; box-shadow: 0 24px 70px rgba(15,23,42,.3); }
+.payment-modal h3, .payment-modal p { margin: 0; }
+.payment-modal label { display: flex; flex-direction: column; gap: 6px; color: #3f4a5d; font-size: .76rem; font-weight: 700; }
+.payment-modal input, .payment-modal select { padding: 11px 12px; border: 1px solid #d6dde8; border-radius: 8px; font: inherit; }
+.payment-modal small { color: var(--muted); line-height: 1.5; }
+.payment-modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 5px; }
+
 .students-list-card {
   overflow: hidden;
   background: var(--surface);

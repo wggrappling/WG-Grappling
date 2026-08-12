@@ -1,4 +1,4 @@
-import type { ApiListResponse, Charge } from '../types';
+import type { ApiListResponse, Charge, CreatePayment } from '../types';
 import { httpService } from './http.service';
 
 export const chargeService = {
@@ -6,5 +6,8 @@ export const chargeService = {
     return httpService.get<ApiListResponse<Charge>>('/charges', {
       params: studentId === undefined ? undefined : { studentId },
     });
+  },
+  registerPayment(chargeId: number, payload: CreatePayment): Promise<{ message: string }> {
+    return httpService.post<{ message: string }, CreatePayment>(`/charges/${chargeId}/payments`, payload);
   },
 };

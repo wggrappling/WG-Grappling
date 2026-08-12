@@ -7,5 +7,5 @@ export type {
   DocumentUploader,
   StudentDocument,
 } from './document';
-export type { Charge, ChargePlan, ChargeStatus, ChargeType } from './charge';
+export type { Charge, ChargePlan, ChargeStatus, ChargeType, CreatePayment, Payment, PaymentMethod } from './charge';
 export type { ClassOption, EnrollmentResponse, ModalityOption, NewStudentEnrollment, PlanOption } from './enrollment';

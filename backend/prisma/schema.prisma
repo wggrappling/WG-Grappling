@@ -280,6 +280,12 @@ enum ChargeStatus {
   REFUNDED
 }
 
+enum PaymentMethod {
+  PIX
+  CASH
+  TRANSFER
+}
+
 model Charge {
   id              Int          @id @default(autoincrement())
   studentId       Int
@@ -297,9 +303,25 @@ model Charge {
 
   student Student @relation(fields: [studentId], references: [id])
   plan    Plan?   @relation(fields: [planId], references: [id])
+  payments Payment[]
 
   @@unique([studentId, type, referenceMonth])
   @@index([studentId, status])
+}
+
+model Payment {
+  id        Int           @id @default(autoincrement())
+  chargeId  Int
+  amount    Decimal
+  paidAt    DateTime
+  method    PaymentMethod
+  reference String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  charge Charge @relation(fields: [chargeId], references: [id], onDelete: Restrict)
+
+  @@index([chargeId, paidAt])
 }
 
 model StudentModality {
