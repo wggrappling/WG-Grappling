@@ -1,7 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateClassDto } from './dto/create-class.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
+import { UserRole } from '../../generated/prisma/enums';
+type UserContext = { id: number; role: UserRole };
 
 const safeRelations = {
   modality: true,
@@ -12,22 +14,25 @@ const safeRelations = {
 export class ClassService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
+  async findAll(user?: UserContext) {
     return this.prisma.class.findMany({
+      where: user?.role === UserRole.TEACHER ? { teacherUserId: user.id } : undefined,
       include: safeRelations,
     });
   }
 
-  async findOne(id: number) {
-    return this.prisma.class.findUnique({
-      where: { id },
+  async findOne(id: number, user?: UserContext) {
+    const record = await this.prisma.class.findFirst({
+      where: { id, ...(user?.role === UserRole.TEACHER ? { teacherUserId: user.id } : {}) },
       include: safeRelations,
     });
+    if (!record && user?.role === UserRole.TEACHER) throw new ForbiddenException('Professor sem acesso a esta turma.');
+    return record;
   }
 
-  async getStudentsByClassId(classId: number) {
-    const classRecord = await this.prisma.class.findUnique({
-      where: { id: classId },
+  async getStudentsByClassId(classId: number, user?: UserContext) {
+    const classRecord = await this.prisma.class.findFirst({
+      where: { id: classId, ...(user?.role === UserRole.TEACHER ? { teacherUserId: user.id } : {}) },
       select: {
         id: true,
         name: true,
@@ -60,6 +65,7 @@ export class ClassService {
       },
     });
 
+    if (!classRecord && user?.role === UserRole.TEACHER) throw new ForbiddenException('Professor sem acesso a esta turma.');
     if (!classRecord) {
       throw new NotFoundException('Class not found.');
     }

@@ -13,9 +13,13 @@ import { ResponsibleService } from './responsible.service';
 import { CreateResponsibleDto } from './dto/create-responsible.dto';
 import { UpdateResponsibleDto } from './dto/update-responsible.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { UserRole } from '../../generated/prisma/enums';
 
 @ApiTags('Responsible')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.OWNER, UserRole.ADMIN)
 @Controller('responsible')
 export class ResponsibleController {
   constructor(private readonly responsibleService: ResponsibleService) {}

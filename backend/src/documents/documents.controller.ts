@@ -16,6 +16,7 @@ const documentRoles = [UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION];
 
 @ApiTags('Documents')
 @UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION)
 @Controller()
 export class DocumentsController {
   constructor(private readonly documentsService: DocumentsService) {}

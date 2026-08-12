@@ -4,9 +4,13 @@ import { StudentPlanService } from './student-plan.service';
 import { CreateStudentPlanDto } from './dto/create-student-plan.dto';
 import { UpdateStudentPlanDto } from './dto/update-student-plan.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { UserRole } from '../../generated/prisma/enums';
 
 @ApiTags('StudentPlan')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.OWNER, UserRole.ADMIN)
 @Controller('student-plan')
 export class StudentPlanController {
   constructor(private readonly studentPlanService: StudentPlanService) {}

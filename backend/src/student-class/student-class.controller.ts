@@ -3,9 +3,13 @@ import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/s
 import { StudentClassService } from './student-class.service';
 import { CreateStudentClassDto } from './dto/create-student-class.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { UserRole } from '../../generated/prisma/enums';
 
 @ApiTags('StudentClass')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.OWNER, UserRole.ADMIN)
 @Controller('student-classes')
 export class StudentClassController {
   constructor(private readonly studentClassService: StudentClassService) {}

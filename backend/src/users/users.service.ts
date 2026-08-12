@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserRole } from '../../generated/prisma/enums';
 
 @Injectable()
 export class UsersService {
@@ -63,7 +64,10 @@ export class UsersService {
     });
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
+  async update(id: number, updateUserDto: UpdateUserDto, actor?: { id: number; role: UserRole }) {
+    if (actor?.id === id && updateUserDto.role !== undefined) {
+      throw new ForbiddenException('Usuário não pode alterar o próprio role.');
+    }
     if (updateUserDto.password) {
       updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
     }

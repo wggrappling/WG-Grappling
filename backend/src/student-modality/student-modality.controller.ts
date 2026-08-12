@@ -4,9 +4,13 @@ import { StudentModalityService } from './student-modality.service';
 import { CreateStudentModalityDto } from './dto/create-student-modality.dto';
 import { UpdateStudentModalityDto } from './dto/update-student-modality.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { UserRole } from '../../generated/prisma/enums';
 
 @ApiTags('StudentModality')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.OWNER, UserRole.ADMIN)
 @Controller('student-modality')
 export class StudentModalityController {
   constructor(private readonly studentModalityService: StudentModalityService) {}

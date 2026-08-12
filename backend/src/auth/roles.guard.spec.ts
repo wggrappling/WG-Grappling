@@ -1,4 +1,4 @@
-import { ExecutionContext } from '@nestjs/common';
+import { ExecutionContext, ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { RolesGuard } from './roles.guard';
 import { UserRole } from '../users/dto/create-user.dto';
@@ -37,6 +37,15 @@ describe('RolesGuard', () => {
 
     reflector.get = jest.fn().mockReturnValue([UserRole.ADMIN, UserRole.OWNER]);
 
-    expect(guard.canActivate(context)).toBe(false);
+    expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
+  });
+
+  it('should reject a request without an authenticated user', () => {
+    const context = {
+      switchToHttp: () => ({ getRequest: () => ({}) }),
+      getHandler: () => ({}), getClass: () => ({}),
+    } as ExecutionContext;
+    reflector.get = jest.fn().mockReturnValue([UserRole.ADMIN]);
+    expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 });

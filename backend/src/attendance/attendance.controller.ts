@@ -1,13 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
 import { AttendanceService } from './attendance.service';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
 import { CreateAttendanceBatchDto } from './dto/create-attendance-batch.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { UserRole } from '../../generated/prisma/enums';
 
 @ApiTags('Attendance')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('attendance')
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
@@ -15,24 +18,27 @@ export class AttendanceController {
   @Get()
   @ApiOperation({ summary: 'Listar todos os registros de presença' })
   @ApiResponse({ status: 200, description: 'Lista de presenças retornada com sucesso.' })
-  findAll(@Query('studentId') studentId?: string) {
-    return this.attendanceService.findAll(studentId === undefined ? undefined : Number(studentId));
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION, UserRole.TEACHER)
+  findAll(@Query('studentId') studentId: string | undefined, @Request() req: any) {
+    return this.attendanceService.findAll(studentId === undefined ? undefined : Number(studentId), req.user);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Buscar registro de presença por ID' })
   @ApiParam({ name: 'id', description: 'ID do registro' })
   @ApiResponse({ status: 200, description: 'Registro retornado com sucesso.' })
-  findOne(@Param('id') id: string) {
-    return this.attendanceService.findOne(Number(id));
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION, UserRole.TEACHER)
+  findOne(@Param('id') id: string, @Request() req: any) {
+    return this.attendanceService.findOne(Number(id), req.user);
   }
 
   @Post()
   @ApiOperation({ summary: 'Criar novo registro de presença' })
   @ApiBody({ type: CreateAttendanceDto })
   @ApiResponse({ status: 201, description: 'Registro criado com sucesso.' })
-  create(@Body() createAttendanceDto: CreateAttendanceDto) {
-    return this.attendanceService.create(createAttendanceDto);
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.TEACHER)
+  create(@Body() createAttendanceDto: CreateAttendanceDto, @Request() req: any) {
+    return this.attendanceService.create(createAttendanceDto, req.user);
   }
 
   @Post('batch')
@@ -41,11 +47,13 @@ export class AttendanceController {
   @ApiResponse({ status: 201, description: 'Presenças registradas com sucesso.' })
   @ApiResponse({ status: 404, description: 'Turma não encontrada.' })
   @ApiResponse({ status: 409, description: 'Algum aluno já possui presença registrada para esta turma e data.' })
-  createBatch(@Body() createAttendanceBatchDto: CreateAttendanceBatchDto) {
-    return this.attendanceService.createBatch(createAttendanceBatchDto);
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.TEACHER)
+  createBatch(@Body() createAttendanceBatchDto: CreateAttendanceBatchDto, @Request() req: any) {
+    return this.attendanceService.createBatch(createAttendanceBatchDto, req.user);
   }
 
   @Patch(':id')
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Atualizar registro de presença' })
   @ApiParam({ name: 'id', description: 'ID do registro' })
   @ApiBody({ type: UpdateAttendanceDto })
@@ -55,6 +63,7 @@ export class AttendanceController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Remover registro de presença' })
   @ApiParam({ name: 'id', description: 'ID do registro' })
   @ApiResponse({ status: 200, description: 'Registro removido com sucesso.' })

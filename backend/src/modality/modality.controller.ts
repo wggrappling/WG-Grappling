@@ -4,14 +4,18 @@ import { ModalityService } from './modality.service';
 import { CreateModalityDto } from './dto/create-modality.dto';
 import { UpdateModalityDto } from './dto/update-modality.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { UserRole } from '../../generated/prisma/enums';
 
 @ApiTags('Modality')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('modality')
 export class ModalityController {
   constructor(private readonly modalityService: ModalityService) {}
 
   @Get()
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION, UserRole.TEACHER)
   @ApiOperation({ summary: 'Listar todas as modalidades' })
   @ApiResponse({ status: 200, description: 'Lista de modalidades retornada com sucesso.' })
   findAll() {
@@ -19,6 +23,7 @@ export class ModalityController {
   }
 
   @Get(':id')
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION, UserRole.TEACHER)
   @ApiOperation({ summary: 'Buscar modalidade por ID' })
   @ApiParam({ name: 'id', description: 'ID da modalidade' })
   @ApiResponse({ status: 200, description: 'Modalidade retornada com sucesso.' })
@@ -27,6 +32,7 @@ export class ModalityController {
   }
 
   @Post()
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Criar nova modalidade' })
   @ApiBody({ type: CreateModalityDto })
   @ApiResponse({ status: 201, description: 'Modalidade criada com sucesso.' })
@@ -35,6 +41,7 @@ export class ModalityController {
   }
 
   @Patch(':id')
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Atualizar modalidade' })
   @ApiParam({ name: 'id', description: 'ID da modalidade' })
   @ApiBody({ type: UpdateModalityDto })
@@ -44,6 +51,7 @@ export class ModalityController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Remover modalidade' })
   @ApiParam({ name: 'id', description: 'ID da modalidade' })
   @ApiResponse({ status: 200, description: 'Modalidade removida com sucesso.' })

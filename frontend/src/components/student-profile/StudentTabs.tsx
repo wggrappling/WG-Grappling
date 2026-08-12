@@ -17,9 +17,11 @@ type StudentTabsProps = {
 };
 
 export function StudentTabs({ activeTab, onTabChange }: StudentTabsProps) {
+  const { user } = useAuth();
+  const visibleTabs = user?.role === 'TEACHER' ? studentTabs.filter((tab) => !['Documentos', 'Financeiro'].includes(tab)) : studentTabs;
   return (
     <nav className="profile-tabs" aria-label="Seções da ficha do aluno" role="tablist">
-      {studentTabs.map((tab) => {
+      {visibleTabs.map((tab) => {
         const isActive = tab === activeTab;
 
         return (
@@ -41,3 +43,4 @@ export function StudentTabs({ activeTab, onTabChange }: StudentTabsProps) {
     </nav>
   );
 }
+import { useAuth } from '../../hooks';

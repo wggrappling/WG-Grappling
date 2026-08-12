@@ -4,14 +4,18 @@ import { PlansService } from './plans.service';
 import { CreatePlanDto } from './dto/create-plan.dto';
 import { UpdatePlanDto } from './dto/update-plan.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { UserRole } from '../../generated/prisma/enums';
 
 @ApiTags('Plans')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('plans')
 export class PlansController {
   constructor(private readonly plansService: PlansService) {}
 
   @Get()
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION)
   @ApiOperation({ summary: 'Listar todos os planos' })
   @ApiResponse({ status: 200, description: 'Lista de planos retornada com sucesso.' })
   findAll() {
@@ -19,6 +23,7 @@ export class PlansController {
   }
 
   @Get(':id')
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION)
   @ApiOperation({ summary: 'Buscar plano por ID' })
   @ApiParam({ name: 'id', description: 'ID do plano' })
   @ApiResponse({ status: 200, description: 'Plano retornado com sucesso.' })
@@ -27,6 +32,7 @@ export class PlansController {
   }
 
   @Post()
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Criar novo plano' })
   @ApiBody({ type: CreatePlanDto })
   @ApiResponse({ status: 201, description: 'Plano criado com sucesso.' })
@@ -35,6 +41,7 @@ export class PlansController {
   }
 
   @Patch(':id')
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Atualizar plano' })
   @ApiParam({ name: 'id', description: 'ID do plano' })
   @ApiBody({ type: UpdatePlanDto })
@@ -44,6 +51,7 @@ export class PlansController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Remover plano' })
   @ApiParam({ name: 'id', description: 'ID do plano' })
   @ApiResponse({ status: 200, description: 'Plano removido com sucesso.' })

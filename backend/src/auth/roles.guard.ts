@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from './roles.decorator';
 
@@ -23,6 +23,7 @@ export class RolesGuard implements CanActivate {
       throw new UnauthorizedException('Usuário sem role cadastrada.');
     }
 
-    return requiredRoles.includes(user.role);
+    if (!requiredRoles.includes(user.role)) throw new ForbiddenException('Usuário sem permissão para esta operação.');
+    return true;
   }
 }

@@ -1,19 +1,21 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
 import { CreateAttendanceBatchDto } from './dto/create-attendance-batch.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
+import { UserRole } from '../../generated/prisma/enums';
+type UserContext = { id: number; role: UserRole };
 
 @Injectable()
 export class AttendanceService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(studentId?: number) {
+  async findAll(studentId?: number, user?: UserContext) {
     if (studentId !== undefined && (!Number.isInteger(studentId) || studentId <= 0)) {
       throw new BadRequestException('studentId inválido.');
     }
     return this.prisma.attendance.findMany({
-      where: studentId === undefined ? undefined : { studentId },
+      where: { ...(studentId === undefined ? {} : { studentId }), ...(user?.role === UserRole.TEACHER ? { class: { teacherUserId: user.id } } : {}) },
       include: {
         class: { include: { modality: true } },
         student: { select: { id: true, enrollmentNumber: true } },
@@ -22,17 +24,23 @@ export class AttendanceService {
     });
   }
 
-  async findOne(id: number) {
-    return this.prisma.attendance.findUnique({
-      where: { id },
+  async findOne(id: number, user?: UserContext) {
+    const attendance = await this.prisma.attendance.findFirst({
+      where: { id, ...(user?.role === UserRole.TEACHER ? { class: { teacherUserId: user.id } } : {}) },
       include: {
         class: true,
         student: true,
       },
     });
+    if (!attendance && user?.role === UserRole.TEACHER) throw new ForbiddenException('Professor sem acesso a esta presença.');
+    return attendance;
   }
 
-  async create(createAttendanceDto: CreateAttendanceDto) {
+  async create(createAttendanceDto: CreateAttendanceDto, user?: UserContext) {
+    if (user?.role === UserRole.TEACHER) {
+      const ownClass = await this.prisma.class.findFirst({ where: { id: createAttendanceDto.classId, teacherUserId: user.id }, select: { id: true } });
+      if (!ownClass) throw new ConflictException('Professor não pode registrar presença em turma de outro professor.');
+    }
     const attendanceDate = new Date(createAttendanceDto.attendanceDate);
 
     const existingAttendance = await this.prisma.attendance.findFirst({
@@ -59,13 +67,16 @@ export class AttendanceService {
     });
   }
 
-  async createBatch(createAttendanceBatchDto: CreateAttendanceBatchDto) {
+  async createBatch(createAttendanceBatchDto: CreateAttendanceBatchDto, user?: UserContext) {
     const { classId, attendanceDate, students } = createAttendanceBatchDto;
     const attendanceDateValue = new Date(attendanceDate);
 
     const classRecord = await this.prisma.class.findUnique({ where: { id: classId } });
     if (!classRecord) {
       throw new NotFoundException('Class not found.');
+    }
+    if (user?.role === UserRole.TEACHER && classRecord.teacherUserId !== user.id) {
+      throw new ConflictException('Professor não pode registrar presença em turma de outro professor.');
     }
 
     const studentClassRelations = await this.prisma.studentClass.findMany({

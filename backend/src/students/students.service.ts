@@ -1,15 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
-import { StudentModalityStatus, StudentPlanStatus } from '../../generated/prisma/enums';
+import { StudentModalityStatus, StudentPlanStatus, UserRole } from '../../generated/prisma/enums';
+
+type UserContext = { id: number; role: UserRole };
 
 @Injectable()
 export class StudentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
-    const students = await this.prisma.student.findMany({ include: { person: true } });
+  async findAll(user?: UserContext) {
+    const students = await this.prisma.student.findMany({
+      where: user?.role === UserRole.TEACHER ? { studentClasses: { some: { class: { teacherUserId: user.id } } } } : undefined,
+      include: { person: true },
+    });
     return {
       module: 'Students',
       total: students.length,
@@ -17,9 +22,9 @@ export class StudentsService {
     };
   }
 
-  async findOne(id: number) {
-    return await this.prisma.student.findUnique({
-      where: { id },
+  async findOne(id: number, user?: UserContext) {
+    const student = await this.prisma.student.findFirst({
+      where: { id, ...(user?.role === UserRole.TEACHER ? { studentClasses: { some: { class: { teacherUserId: user.id } } } } : {}) },
       include: {
         person: {
           include: { address: true },
@@ -56,6 +61,9 @@ export class StudentsService {
         },
       },
     });
+    if (!student && user?.role === UserRole.TEACHER) throw new ForbiddenException('Professor sem acesso a este aluno.');
+    if (!student) return null;
+    return student;
   }
 
   async create(createStudentDto: CreateStudentDto) {

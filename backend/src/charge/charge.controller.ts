@@ -5,10 +5,13 @@ import { ChargeGeneratorService } from './charge-generator.service';
 import { CreateChargeDto } from './dto/create-charge.dto';
 import { UpdateChargeDto } from './dto/update-charge.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { UserRole } from '../../generated/prisma/enums';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 
 @ApiTags('Charges')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('charges')
 export class ChargeController {
   constructor(
@@ -17,6 +20,7 @@ export class ChargeController {
   ) {}
 
   @Get()
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION)
   @ApiOperation({ summary: 'Listar todas as cobranças' })
   @ApiResponse({ status: 200, description: 'Cobranças retornadas com sucesso.' })
   findAll(@Query('studentId') studentId?: string) {
@@ -24,6 +28,7 @@ export class ChargeController {
   }
 
   @Get(':id')
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION)
   @ApiOperation({ summary: 'Buscar cobrança por ID' })
   @ApiParam({ name: 'id', description: 'ID da cobrança' })
   @ApiResponse({ status: 200, description: 'Cobrança retornada com sucesso.' })
@@ -32,12 +37,14 @@ export class ChargeController {
   }
 
   @Get(':id/payments')
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION)
   @ApiOperation({ summary: 'Listar pagamentos de uma cobrança' })
   findPayments(@Param('id') id: string) {
     return this.chargeService.findPayments(Number(id));
   }
 
   @Post(':id/payments')
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION)
   @ApiOperation({ summary: 'Registrar pagamento manual de uma cobrança' })
   @ApiBody({ type: CreatePaymentDto })
   registerPayment(@Param('id') id: string, @Body() dto: CreatePaymentDto) {
@@ -45,6 +52,7 @@ export class ChargeController {
   }
 
   @Post()
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Criar nova cobrança' })
   @ApiBody({ type: CreateChargeDto })
   @ApiResponse({ status: 201, description: 'Cobrança criada com sucesso.' })
@@ -53,6 +61,7 @@ export class ChargeController {
   }
 
   @Post('generate-monthly')
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Gerar mensalidades automáticas para alunos ativos' })
   @ApiResponse({ status: 201, description: 'Cobranças mensais geradas com sucesso.' })
   generateMonthlyCharges() {
@@ -60,6 +69,7 @@ export class ChargeController {
   }
 
   @Patch(':id')
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Atualizar cobrança' })
   @ApiParam({ name: 'id', description: 'ID da cobrança' })
   @ApiBody({ type: UpdateChargeDto })
@@ -69,6 +79,7 @@ export class ChargeController {
   }
 
   @Delete(':id')
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Remover cobrança' })
   @ApiParam({ name: 'id', description: 'ID da cobrança' })
   @ApiResponse({ status: 200, description: 'Cobrança removida com sucesso.' })
