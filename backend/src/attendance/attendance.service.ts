@@ -4,18 +4,23 @@ import { CreateAttendanceDto } from './dto/create-attendance.dto';
 import { CreateAttendanceBatchDto } from './dto/create-attendance-batch.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 import { UserRole } from '../../generated/prisma/enums';
+import { AttendanceQueryDto } from './dto/attendance-query.dto';
 type UserContext = { id: number; role: UserRole };
 
 @Injectable()
 export class AttendanceService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(studentId?: number, user?: UserContext) {
-    if (studentId !== undefined && (!Number.isInteger(studentId) || studentId <= 0)) {
-      throw new BadRequestException('studentId inválido.');
-    }
+  async findAll(query: AttendanceQueryDto = {}, user?: UserContext) {
+    const { studentId, classId, startDate, endDate } = query;
+    if (startDate && endDate && new Date(startDate) > new Date(endDate)) throw new BadRequestException('startDate deve ser anterior ou igual a endDate.');
     return this.prisma.attendance.findMany({
-      where: { ...(studentId === undefined ? {} : { studentId }), ...(user?.role === UserRole.TEACHER ? { class: { teacherUserId: user.id } } : {}) },
+      where: {
+        ...(studentId === undefined ? {} : { studentId }),
+        ...(classId === undefined ? {} : { classId }),
+        ...(!startDate && !endDate ? {} : { attendanceDate: { ...(startDate ? { gte: new Date(startDate) } : {}), ...(endDate ? { lte: new Date(endDate) } : {}) } }),
+        ...(user?.role === UserRole.TEACHER ? { class: { teacherUserId: user.id } } : {}),
+      },
       include: {
         class: { include: { modality: true } },
         student: { select: { id: true, enrollmentNumber: true } },
@@ -42,6 +47,12 @@ export class AttendanceService {
       if (!ownClass) throw new ConflictException('Professor não pode registrar presença em turma de outro professor.');
     }
     const attendanceDate = new Date(createAttendanceDto.attendanceDate);
+
+    const studentClass = await this.prisma.studentClass.findFirst({
+      where: { classId: createAttendanceDto.classId, studentId: createAttendanceDto.studentId },
+      select: { id: true },
+    });
+    if (!studentClass) throw new NotFoundException('Aluno não encontrado nesta turma.');
 
     const existingAttendance = await this.prisma.attendance.findFirst({
       where: {

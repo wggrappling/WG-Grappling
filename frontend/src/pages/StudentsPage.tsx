@@ -59,6 +59,7 @@ export function StudentsPage() {
         </div>
         <div className="students-header-actions">
           {!loading && !error && <span>{data?.total ?? 0} aluno(s) cadastrado(s)</span>}
+          <button type="button" className="secondary-action-button" onClick={() => navigate('/attendance')}>Realizar chamada</button>
           {user?.role !== 'TEACHER' && <button type="button" className="open-student-button" onClick={() => navigate('/students/new')}>Novo aluno</button>}
         </div>
       </header>

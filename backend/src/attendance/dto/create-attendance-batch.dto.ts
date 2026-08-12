@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsDateString, IsEnum, IsInt, IsNotEmpty, Min, ValidateNested } from 'class-validator';
+import { ArrayMinSize, ArrayUnique, IsArray, IsDateString, IsEnum, IsInt, Min, ValidateNested } from 'class-validator';
 import { AttendanceStatus } from '../../../generated/prisma/enums';
 
 class AttendanceStudentInputDto {
@@ -26,7 +26,8 @@ export class CreateAttendanceBatchDto {
 
   @ApiProperty({ type: [AttendanceStudentInputDto], description: 'Lista de estudantes e status da presença' })
   @IsArray()
-  @IsNotEmpty()
+  @ArrayMinSize(1)
+  @ArrayUnique((student: AttendanceStudentInputDto) => student.studentId)
   @ValidateNested({ each: true })
   @Type(() => AttendanceStudentInputDto)
   students: AttendanceStudentInputDto[];

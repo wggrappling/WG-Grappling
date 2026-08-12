@@ -4,6 +4,7 @@ import { LoginPage } from './pages/LoginPage';
 import { StudentCentralPage } from './pages/StudentCentralPage';
 import { StudentsPage } from './pages/StudentsPage';
 import { NewStudentPage } from './pages/NewStudentPage';
+import { AttendancePage } from './pages/AttendancePage';
 
 function App() {
   return (
@@ -24,6 +25,10 @@ function App() {
             <NewStudentPage />
           </ProtectedRoute>
         )}
+      />
+      <Route
+        path="/attendance"
+        element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN', 'RECEPTION', 'TEACHER']}><AttendancePage /></ProtectedRoute>}
       />
       <Route
         path="/students/:studentId"

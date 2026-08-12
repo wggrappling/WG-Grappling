@@ -366,6 +366,22 @@ button {
 
 @media (max-width: 760px) { .document-upload-form { grid-template-columns: 1fr; } .document-upload-form small { grid-column: auto; } }
 
+.attendance-call-card { padding: 26px; background: #fff; border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 18px 45px rgba(15,23,42,.1); }
+.attendance-call-filters, .attendance-period { display: flex; gap: 16px; }
+.attendance-call-filters { padding-bottom: 22px; border-bottom: 1px solid var(--line); }
+.attendance-call-filters label, .attendance-period label { display: flex; flex-direction: column; gap: 6px; color: #3f4a5d; font-size: .74rem; font-weight: 700; }
+.attendance-call-filters input, .attendance-call-filters select, .attendance-period input { padding: 10px 12px; border: 1px solid #d6dde8; border-radius: 8px; font: inherit; }
+.attendance-call-heading { display: flex; align-items: center; justify-content: space-between; margin: 22px 0 14px; }
+.attendance-call-heading h2, .attendance-call-heading p { margin: 0 0 4px; }
+.attendance-call-heading > strong { color: #166534; }
+.attendance-roster { margin-bottom: 22px; border: 1px solid var(--line); border-radius: 10px; }
+.attendance-student { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 15px 18px; border-bottom: 1px solid var(--line); }
+.attendance-student:last-child { border-bottom: 0; }
+.attendance-student > div { display: flex; gap: 16px; }
+.attendance-student label { font-size: .78rem; }
+
+@media (max-width: 680px) { .attendance-call-filters, .attendance-period, .attendance-student, .attendance-student > div { align-items: stretch; flex-direction: column; } }
+
 .students-list-card {
   overflow: hidden;
   background: var(--surface);

@@ -8,6 +8,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../../generated/prisma/enums';
+import { AttendanceQueryDto } from './dto/attendance-query.dto';
 
 @ApiTags('Attendance')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -19,8 +20,8 @@ export class AttendanceController {
   @ApiOperation({ summary: 'Listar todos os registros de presença' })
   @ApiResponse({ status: 200, description: 'Lista de presenças retornada com sucesso.' })
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION, UserRole.TEACHER)
-  findAll(@Query('studentId') studentId: string | undefined, @Request() req: any) {
-    return this.attendanceService.findAll(studentId === undefined ? undefined : Number(studentId), req.user);
+  findAll(@Query() query: AttendanceQueryDto, @Request() req: any) {
+    return this.attendanceService.findAll(query, req.user);
   }
 
   @Get(':id')
@@ -36,7 +37,7 @@ export class AttendanceController {
   @ApiOperation({ summary: 'Criar novo registro de presença' })
   @ApiBody({ type: CreateAttendanceDto })
   @ApiResponse({ status: 201, description: 'Registro criado com sucesso.' })
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.TEACHER)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION, UserRole.TEACHER)
   create(@Body() createAttendanceDto: CreateAttendanceDto, @Request() req: any) {
     return this.attendanceService.create(createAttendanceDto, req.user);
   }
@@ -47,7 +48,7 @@ export class AttendanceController {
   @ApiResponse({ status: 201, description: 'Presenças registradas com sucesso.' })
   @ApiResponse({ status: 404, description: 'Turma não encontrada.' })
   @ApiResponse({ status: 409, description: 'Algum aluno já possui presença registrada para esta turma e data.' })
-  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.TEACHER)
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION, UserRole.TEACHER)
   createBatch(@Body() createAttendanceBatchDto: CreateAttendanceBatchDto, @Request() req: any) {
     return this.attendanceService.createBatch(createAttendanceBatchDto, req.user);
   }
