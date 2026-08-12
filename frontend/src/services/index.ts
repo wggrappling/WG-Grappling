@@ -3,3 +3,6 @@ export { httpService } from './http.service';
 export { studentService } from './student.service';
 export { documentService } from './document.service';
 export { chargeService } from './charge.service';
+export { catalogService } from './catalog.service';
+export { enrollmentService } from './enrollment.service';
+export { attendanceService } from './attendance.service';

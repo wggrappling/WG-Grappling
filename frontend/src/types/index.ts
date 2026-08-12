@@ -8,3 +8,4 @@ export type {
   StudentDocument,
 } from './document';
 export type { Charge, ChargePlan, ChargeStatus, ChargeType } from './charge';
+export type { ClassOption, EnrollmentResponse, ModalityOption, NewStudentEnrollment, PlanOption } from './enrollment';

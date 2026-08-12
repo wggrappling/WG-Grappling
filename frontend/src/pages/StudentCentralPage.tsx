@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { StudentTabPanel } from '../components/student-profile/StudentTabPanel';
 import { StudentTabs, studentTabs, type StudentTab } from '../components/student-profile/StudentTabs';
 import { useApiRequest, useAuth } from '../hooks';
@@ -16,6 +16,7 @@ export function StudentCentralPage() {
   const [activeTab, setActiveTab] = useState<StudentTab>(studentTabs[0]);
   const { logout, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { studentId } = useParams();
   const { data: student, error, loading, execute } = useApiRequest<Student, [number]>();
   const numericStudentId = Number(studentId);
@@ -61,8 +62,9 @@ export function StudentCentralPage() {
       </div>
 
       <section className="student-profile" aria-labelledby="student-name">
+        {typeof location.state?.successMessage === 'string' && <div className="student-success" role="status">{location.state.successMessage}</div>}
         <div className="student-photo">
-          <img src="/student-avatar.svg" alt={`Foto de ${student.person.name}`} />
+          <span aria-label="Foto não disponível">{student.person.name.split(/\s+/).slice(0, 2).map((name) => name[0]).join('').toUpperCase()}</span>
         </div>
 
         <div className="student-summary">
@@ -75,7 +77,7 @@ export function StudentCentralPage() {
           <dl className="student-metadata">
             <div><dt>Matrícula</dt><dd>{student.enrollmentNumber}</dd></div>
             <div><dt>Faixa</dt><dd>Não disponível</dd></div>
-            <div><dt>Modalidades</dt><dd>Não disponível</dd></div>
+            <div><dt>Modalidades</dt><dd>{student.modalities?.map(({ modality }) => modality.name).join(', ') || 'Não disponível'}</dd></div>
           </dl>
         </div>
       </section>

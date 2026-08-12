@@ -66,15 +66,14 @@ const buildSummary = (charges: readonly Charge[]): readonly FinancialSummaryItem
 };
 
 export function StudentFinancialTab({ studentId }: StudentFinancialTabProps) {
-  const { data, error, loading, execute } = useApiRequest<ApiListResponse<Charge>>();
+  const { data, error, loading, execute } = useApiRequest<ApiListResponse<Charge>, [number]>();
   const charges = useMemo(() => (data?.data ?? [])
-    .filter((charge) => charge.studentId === studentId)
     .sort((a, b) => Date.parse(b.dueDate) - Date.parse(a.dueDate)), [data, studentId]);
   const summary = useMemo(() => buildSummary(charges), [charges]);
 
   useEffect(() => {
-    void execute(chargeService.getAll).catch(() => undefined);
-  }, [execute]);
+    void execute(chargeService.getAll, studentId).catch(() => undefined);
+  }, [execute, studentId]);
 
   return (
     <section id="panel-Financeiro" className="financial-panel" role="tabpanel" aria-labelledby="tab-Financeiro">
@@ -83,10 +82,6 @@ export function StudentFinancialTab({ studentId }: StudentFinancialTabProps) {
           <p className="section-eyebrow">Visão financeira</p>
           <h2>Resumo Financeiro</h2>
           <p>Acompanhe mensalidades, vencimentos e pagamentos do aluno.</p>
-        </div>
-        <div className="financial-actions">
-          <button className="secondary-action-button" type="button" disabled>Registrar Pagamento</button>
-          <button className="primary-action-button" type="button" disabled>Gerar PIX</button>
         </div>
       </div>
 

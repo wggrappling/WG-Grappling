@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
 import { AttendanceService } from './attendance.service';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
@@ -15,8 +15,8 @@ export class AttendanceController {
   @Get()
   @ApiOperation({ summary: 'Listar todos os registros de presença' })
   @ApiResponse({ status: 200, description: 'Lista de presenças retornada com sucesso.' })
-  findAll() {
-    return this.attendanceService.findAll();
+  findAll(@Query('studentId') studentId?: string) {
+    return this.attendanceService.findAll(studentId === undefined ? undefined : Number(studentId));
   }
 
   @Get(':id')

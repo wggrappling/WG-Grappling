@@ -3,6 +3,7 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
 import { StudentCentralPage } from './pages/StudentCentralPage';
 import { StudentsPage } from './pages/StudentsPage';
+import { NewStudentPage } from './pages/NewStudentPage';
 
 function App() {
   return (
@@ -13,6 +14,14 @@ function App() {
         element={(
           <ProtectedRoute>
             <StudentsPage />
+          </ProtectedRoute>
+        )}
+      />
+      <Route
+        path="/students/new"
+        element={(
+          <ProtectedRoute>
+            <NewStudentPage />
           </ProtectedRoute>
         )}
       />

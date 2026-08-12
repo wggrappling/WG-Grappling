@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
 import { CreateAttendanceBatchDto } from './dto/create-attendance-batch.dto';
@@ -8,12 +8,17 @@ import { UpdateAttendanceDto } from './dto/update-attendance.dto';
 export class AttendanceService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
+  async findAll(studentId?: number) {
+    if (studentId !== undefined && (!Number.isInteger(studentId) || studentId <= 0)) {
+      throw new BadRequestException('studentId inválido.');
+    }
     return this.prisma.attendance.findMany({
+      where: studentId === undefined ? undefined : { studentId },
       include: {
-        class: true,
-        student: true,
+        class: { include: { modality: true } },
+        student: { select: { id: true, enrollmentNumber: true } },
       },
+      orderBy: { attendanceDate: 'desc' },
     });
   }
 

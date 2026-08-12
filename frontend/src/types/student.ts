@@ -7,7 +7,13 @@ export type StudentPerson = {
   email: string;
   phone: string | null;
   createdAt: string;
+  address?: { street: string; number: string | null; complement: string | null; neighborhood: string; city: string; state: string; zipCode: string; country: string } | null;
 };
+
+export type StudentResponsible = { responsible: { name: string; relationship: string; phone: string | null; email: string | null } };
+export type StudentModality = { modality: { id: number; name: string } };
+export type StudentPlan = { monthlyPrice: string | number; billingDay: number; plan: { id: number; name: string } };
+export type StudentClass = { class: { id: number; name: string; modality: { id: number; name: string }; teacher: { id: number; name: string } } };
 
 export type Student = {
   id: number;
@@ -19,4 +25,8 @@ export type Student = {
   createdAt: string;
   updatedAt: string;
   person: StudentPerson;
+  responsibles?: StudentResponsible[];
+  modalities?: StudentModality[];
+  plans?: StudentPlan[];
+  studentClasses?: StudentClass[];
 };

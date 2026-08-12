@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ChargeService } from './charge.service';
 import { ChargeGeneratorService } from './charge-generator.service';
@@ -18,8 +18,8 @@ export class ChargeController {
   @Get()
   @ApiOperation({ summary: 'Listar todas as cobranças' })
   @ApiResponse({ status: 200, description: 'Cobranças retornadas com sucesso.' })
-  findAll() {
-    return this.chargeService.findAll();
+  findAll(@Query('studentId') studentId?: string) {
+    return this.chargeService.findAll(studentId === undefined ? undefined : Number(studentId));
   }
 
   @Get(':id')

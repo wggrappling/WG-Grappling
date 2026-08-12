@@ -1,4 +1,4 @@
-import type { ProfileSection } from '../../mocks/studentProfile';
+import type { ProfileSection } from '../../types/profile';
 
 type ProfileInfoCardProps = ProfileSection;
 

@@ -3,26 +3,25 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateClassDto } from './dto/create-class.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
 
+const safeRelations = {
+  modality: true,
+  teacher: { select: { id: true, name: true, email: true, role: true, active: true, createdAt: true } },
+} as const;
+
 @Injectable()
 export class ClassService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll() {
     return this.prisma.class.findMany({
-      include: {
-        modality: true,
-        teacher: true,
-      },
+      include: safeRelations,
     });
   }
 
   async findOne(id: number) {
     return this.prisma.class.findUnique({
       where: { id },
-      include: {
-        modality: true,
-        teacher: true,
-      },
+      include: safeRelations,
     });
   }
 
@@ -87,10 +86,7 @@ export class ClassService {
   async create(createClassDto: CreateClassDto) {
     return this.prisma.class.create({
       data: createClassDto,
-      include: {
-        modality: true,
-        teacher: true,
-      },
+      include: safeRelations,
     });
   }
 
@@ -98,10 +94,7 @@ export class ClassService {
     return this.prisma.class.update({
       where: { id },
       data: updateClassDto,
-      include: {
-        modality: true,
-        teacher: true,
-      },
+      include: safeRelations,
     });
   }
 

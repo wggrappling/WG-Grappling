@@ -57,7 +57,10 @@ export function StudentsPage() {
           <h1>Alunos</h1>
           <p>Pesquise e acesse a Central do Aluno.</p>
         </div>
-        {!loading && !error && <span>{data?.total ?? 0} aluno(s) cadastrado(s)</span>}
+        <div className="students-header-actions">
+          {!loading && !error && <span>{data?.total ?? 0} aluno(s) cadastrado(s)</span>}
+          <button type="button" className="open-student-button" onClick={() => navigate('/students/new')}>Novo aluno</button>
+        </div>
       </header>
 
       <section className="students-list-card" aria-labelledby="students-list-title">

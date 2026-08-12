@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateChargeDto } from './dto/create-charge.dto';
 import { UpdateChargeDto } from './dto/update-charge.dto';
@@ -7,8 +7,12 @@ import { UpdateChargeDto } from './dto/update-charge.dto';
 export class ChargeService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
+  async findAll(studentId?: number) {
+    if (studentId !== undefined && (!Number.isInteger(studentId) || studentId <= 0)) {
+      throw new BadRequestException('studentId inválido.');
+    }
     const charges = await this.prisma.charge.findMany({
+      where: studentId === undefined ? undefined : { studentId },
       include: {
         student: true,
         plan: true,
