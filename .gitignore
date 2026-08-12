@@ -27,3 +27,7 @@ Thumbs.db
 backend/.agents/
 backend/.claude/
 backend/.windsurf/
+
+# Uploaded runtime documents
+/storage/
+/backend/storage/

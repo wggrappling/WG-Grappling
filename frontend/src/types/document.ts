@@ -18,15 +18,14 @@ export type StudentDocument = {
   id: number;
   studentId: number;
   type: DocumentType;
-  fileName: string;
   originalName: string;
   mimeType: string;
   extension: string;
   size: number;
-  storagePath: string;
   status: DocumentStatus;
   uploadedBy: number;
   createdAt: string;
   updatedAt: string;
   uploader: DocumentUploader;
+  fileAvailable: boolean;
 };
