@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { StudentTabPanel } from '../components/student-profile/StudentTabPanel';
+import { EditStudentPanel } from '../components/student-profile/EditStudentPanel';
 import { StudentTabs, studentTabs, type StudentTab } from '../components/student-profile/StudentTabs';
 import { useApiRequest, useAuth } from '../hooks';
 import { studentService } from '../services';
@@ -14,6 +15,7 @@ const statusLabels: Record<StudentStatus, string> = {
 
 export function StudentCentralPage() {
   const [activeTab, setActiveTab] = useState<StudentTab>(studentTabs[0]);
+  const [editing, setEditing] = useState(false);
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -72,18 +74,20 @@ export function StudentCentralPage() {
           <div className="student-title-row">
             <h1 id="student-name">{student.person.name}</h1>
             <span className="status-badge">{statusLabels[student.status]}</span>
+            {(user?.role === 'OWNER' || user?.role === 'ADMIN') && <button type="button" className="student-edit-button" onClick={() => setEditing(true)}>Editar aluno</button>}
           </div>
 
           <dl className="student-metadata">
             <div><dt>Matrícula</dt><dd>{student.enrollmentNumber}</dd></div>
             <div><dt>Faixa</dt><dd>Não disponível</dd></div>
-            <div><dt>Modalidades</dt><dd>{student.modalities?.map(({ modality }) => modality.name).join(', ') || 'Não disponível'}</dd></div>
+            <div><dt>Modalidades</dt><dd>{student.modalities?.filter(({ status }) => status === 'ACTIVE').map(({ modality }) => modality.name).join(', ') || 'Não disponível'}</dd></div>
           </dl>
         </div>
       </section>
 
       <StudentTabs activeTab={activeTab} onTabChange={setActiveTab} />
       <StudentTabPanel activeTab={activeTab} student={student} />
+      {editing && <EditStudentPanel student={student} onClose={() => setEditing(false)} onSaved={() => execute(studentService.getById, numericStudentId)} />}
     </main>
   );
 }

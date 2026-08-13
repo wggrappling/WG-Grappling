@@ -50,10 +50,7 @@ describe('StudentsService', () => {
           responsibles: {
             include: { responsible: true },
           },
-          modalities: {
-            where: { status: StudentModalityStatus.ACTIVE },
-            include: { modality: true },
-          },
+          modalities: { include: { modality: true } },
           plans: {
             where: { status: StudentPlanStatus.ACTIVE },
             include: { plan: true },

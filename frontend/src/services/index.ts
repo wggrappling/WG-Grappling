@@ -7,3 +7,4 @@ export { catalogService } from './catalog.service';
 export { enrollmentService } from './enrollment.service';
 export { attendanceService } from './attendance.service';
 export { adminService } from './admin.service';
+export { studentAdminService } from './student-admin.service';

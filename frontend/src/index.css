@@ -340,6 +340,24 @@ button {
 .student-success { position: absolute; top: 12px; right: 20px; padding: 9px 12px; color: #166534; background: #dcfce7; border-radius: 8px; font-size: .78rem; font-weight: 700; }
 .student-profile { position: relative; }
 .student-photo span { font-size: 2rem; font-weight: 800; }
+.student-edit-button { margin-left: auto; padding: 8px 12px; color: #fff; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.35); border-radius: 8px; cursor: pointer; font-size: .75rem; font-weight: 700; }
+.edit-student-backdrop { position: fixed; z-index: 30; inset: 0; display: flex; justify-content: flex-end; background: rgba(15,23,42,.62); }
+.edit-student-panel { width: min(100%, 720px); height: 100vh; padding: 28px; overflow-y: auto; background: #f8fafc; box-shadow: -20px 0 60px rgba(15,23,42,.25); }
+.edit-student-panel > header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.edit-student-panel h2, .edit-student-panel h3 { margin: 3px 0; color: var(--navy); }
+.edit-student-panel > header button, .link-row button, .inline-editor button { padding: 7px 10px; color: #334155; background: #fff; border: 1px solid #d6dde8; border-radius: 7px; cursor: pointer; }
+.edit-section { margin-bottom: 18px; padding: 20px; background: #fff; border: 1px solid var(--line); border-radius: 13px; }
+.edit-section > p, .edit-section > small { color: var(--muted); font-size: .76rem; line-height: 1.5; }
+.edit-section .form-grid { margin: 16px 0; }
+.edit-section textarea { min-height: 72px; padding: 10px; border: 1px solid #d6dde8; border-radius: 8px; font: inherit; resize: vertical; }
+.wide-field { grid-column: 1 / -1; }
+.inline-editor { display: flex; align-items: end; gap: 10px; margin-top: 14px; }
+.inline-editor label { display: flex; flex-direction: column; gap: 5px; color: #3f4a5d; font-size: .72rem; font-weight: 700; }
+.inline-editor input, .inline-editor select { padding: 8px 10px; border: 1px solid #d6dde8; border-radius: 7px; font: inherit; }
+.link-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 11px 0; border-bottom: 1px solid #edf0f5; }
+.link-row span, .link-row small { display: block; }
+.link-row small { margin-top: 4px; color: var(--muted); font-size: .7rem; }
+@media (max-width: 600px) { .inline-editor { align-items: stretch; flex-direction: column; } .wide-field { grid-column: auto; } }
 
 @media (max-width: 680px) { .form-grid { grid-template-columns: 1fr; } .students-header-actions { align-items: flex-end; flex-direction: column; } }
 

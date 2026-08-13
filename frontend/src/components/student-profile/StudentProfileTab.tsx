@@ -19,7 +19,7 @@ export function StudentProfileTab({ student }: Props) {
     { title: 'Informações da Academia', fields: [
       { label: 'Status', value: statusLabels[student.status], badge: true }, { label: 'Data de matrícula', value: formatDate(student.joinedAt) },
       { label: 'Plano', value: student.plans?.map(({ plan }) => plan.name).join(', ') || 'Não informado' },
-      { label: 'Modalidades', value: student.modalities?.map(({ modality }) => modality.name).join(', ') || 'Não informado' },
+      { label: 'Modalidades', value: student.modalities?.filter(({ status }) => status === 'ACTIVE').map(({ modality }) => modality.name).join(', ') || 'Não informado' },
       { label: 'Turmas', value: student.studentClasses?.map(({ class: item }) => item.name).join(', ') || 'Não informado' },
       { label: 'Professor', value: [...new Set(student.studentClasses?.map(({ class: item }) => item.teacher.name) ?? [])].join(', ') || 'Não informado' },
       { label: 'Faixa atual', value: missing },

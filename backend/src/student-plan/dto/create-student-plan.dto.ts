@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import { IsDateString, IsEnum, IsInt, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 import { StudentPlanStatus } from '../../../generated/prisma/enums';
 
 export class CreateStudentPlanDto {
@@ -21,13 +21,14 @@ export class CreateStudentPlanDto {
   endDate?: string;
 
   @ApiProperty({ example: 129.9, description: 'Preço mensal do plano' })
-  @IsInt()
+  @IsNumber()
   @Min(0)
   monthlyPrice: number;
 
   @ApiProperty({ example: 10, description: 'Dia de cobrança do plano' })
   @IsInt()
   @Min(1)
+  @Max(31)
   billingDay: number;
 
   @ApiProperty({ enum: StudentPlanStatus, example: StudentPlanStatus.ACTIVE })

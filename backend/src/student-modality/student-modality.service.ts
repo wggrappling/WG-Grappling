@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateStudentModalityDto } from './dto/create-student-modality.dto';
 import { UpdateStudentModalityDto } from './dto/update-student-modality.dto';
@@ -27,6 +27,14 @@ export class StudentModalityService {
   }
 
   async create(createStudentModalityDto: CreateStudentModalityDto) {
+    const [student, modality, existing] = await Promise.all([
+      this.prisma.student.findUnique({ where: { id: createStudentModalityDto.studentId }, select: { id: true } }),
+      this.prisma.modality.findFirst({ where: { id: createStudentModalityDto.modalityId, active: true }, select: { id: true } }),
+      this.prisma.studentModality.findUnique({ where: { studentId_modalityId: { studentId: createStudentModalityDto.studentId, modalityId: createStudentModalityDto.modalityId } } }),
+    ]);
+    if (!student) throw new NotFoundException('Aluno não encontrado.');
+    if (!modality) throw new NotFoundException('Modalidade ativa não encontrada.');
+    if (existing) throw new ConflictException('Este aluno já possui vínculo com esta modalidade.');
     return this.prisma.studentModality.create({
       data: createStudentModalityDto,
       include: {

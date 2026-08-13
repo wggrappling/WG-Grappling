@@ -31,10 +31,15 @@ export class StudentClassService {
       throw new NotFoundException(`Student com id ${createStudentClassDto.studentId} não encontrado.`);
     }
 
-    const classRecord = await this.prisma.class.findUnique({ where: { id: createStudentClassDto.classId } });
+    const classRecord = await this.prisma.class.findFirst({ where: { id: createStudentClassDto.classId, active: true } });
     if (!classRecord) {
       throw new NotFoundException(`Class com id ${createStudentClassDto.classId} não encontrado.`);
     }
+
+    const activeModality = await this.prisma.studentModality.findFirst({
+      where: { studentId: createStudentClassDto.studentId, modalityId: classRecord.modalityId, status: 'ACTIVE' },
+    });
+    if (!activeModality) throw new ConflictException('O aluno precisa possuir vínculo ativo com a modalidade da turma.');
 
     const existingAssociation = await this.prisma.studentClass.findFirst({
       where: {
