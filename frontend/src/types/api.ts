@@ -2,6 +2,9 @@ export type ApiListResponse<T> = {
   module?: string;
   total: number;
   data: T[];
+  page?: number;
+  pageSize?: number;
+  totalPages?: number;
 };
 
 export type ApiDataResponse<T> = {

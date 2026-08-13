@@ -3,6 +3,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { StudentModalityStatus, StudentPlanStatus, UserRole } from '../../generated/prisma/enums';
+import { Prisma } from '../../generated/prisma/client';
+import { StudentQueryDto } from './dto/student-query.dto';
 
 type UserContext = { id: number; role: UserRole };
 
@@ -10,14 +12,36 @@ type UserContext = { id: number; role: UserRole };
 export class StudentsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(user?: UserContext) {
-    const students = await this.prisma.student.findMany({
-      where: user?.role === UserRole.TEACHER ? { studentClasses: { some: { class: { teacherUserId: user.id } } } } : undefined,
-      include: { person: true },
-    });
+  async findAll(user?: UserContext, query: StudentQueryDto = new StudentQueryDto()) {
+    const page = query.page ?? 1;
+    const pageSize = query.pageSize ?? 20;
+    const search = query.search?.trim();
+    const where: Prisma.StudentWhereInput = {
+      ...(user?.role === UserRole.TEACHER ? { studentClasses: { some: { class: { teacherUserId: user.id } } } } : {}),
+      ...(query.status ? { status: query.status } : {}),
+      ...(query.modalityId ? { modalities: { some: { modalityId: query.modalityId, status: StudentModalityStatus.ACTIVE } } } : {}),
+      ...(search ? { OR: [
+        { enrollmentNumber: { contains: search, mode: 'insensitive' } },
+        { person: { name: { contains: search, mode: 'insensitive' } } },
+        { person: { cpf: { contains: search.replace(/\D/g, '') } } },
+      ] } : {}),
+    };
+    const orderBy: Prisma.StudentOrderByWithRelationInput = query.sortBy === 'name'
+      ? { person: { name: query.sortOrder ?? 'asc' } }
+      : { [query.sortBy ?? 'joinedAt']: query.sortOrder ?? 'asc' };
+    const [total, students] = await this.prisma.$transaction([
+      this.prisma.student.count({ where }),
+      this.prisma.student.findMany({
+        where, orderBy, skip: (page - 1) * pageSize, take: pageSize,
+        include: { person: true, modalities: { where: { status: StudentModalityStatus.ACTIVE }, include: { modality: true } } },
+      }),
+    ]);
     return {
       module: 'Students',
-      total: students.length,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
       data: students,
     };
   }
