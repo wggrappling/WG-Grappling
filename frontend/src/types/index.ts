@@ -9,3 +9,4 @@ export type {
 } from './document';
 export type { Charge, ChargePlan, ChargeStatus, ChargeType, CreatePayment, Payment, PaymentMethod } from './charge';
 export type { ClassOption, EnrollmentResponse, ModalityOption, NewStudentEnrollment, PlanOption } from './enrollment';
+export type { AdminClass, AdminModality, AdminPlan, SafeUser } from './admin';

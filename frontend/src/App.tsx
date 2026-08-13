@@ -5,11 +5,19 @@ import { StudentCentralPage } from './pages/StudentCentralPage';
 import { StudentsPage } from './pages/StudentsPage';
 import { NewStudentPage } from './pages/NewStudentPage';
 import { AttendancePage } from './pages/AttendancePage';
+import { AdminHomePage } from './pages/AdminHomePage';
+import { AdminPlansPage } from './pages/AdminPlansPage';
+import { AdminModalitiesPage } from './pages/AdminModalitiesPage';
+import { AdminClassesPage } from './pages/AdminClassesPage';
 
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/admin" element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN']}><AdminHomePage /></ProtectedRoute>} />
+      <Route path="/admin/plans" element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN']}><AdminPlansPage /></ProtectedRoute>} />
+      <Route path="/admin/modalities" element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN']}><AdminModalitiesPage /></ProtectedRoute>} />
+      <Route path="/admin/classes" element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN']}><AdminClassesPage /></ProtectedRoute>} />
       <Route
         path="/students"
         element={(

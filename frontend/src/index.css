@@ -389,6 +389,32 @@ button {
   border-radius: 18px;
   box-shadow: 0 18px 45px rgba(15, 23, 42, 0.1);
 }
+.admin-nav { display: flex; gap: 6px; margin-bottom: 18px; padding: 8px; background: #fff; border: 1px solid var(--line); border-radius: 12px; }
+.admin-nav a { padding: 9px 14px; color: var(--muted); border-radius: 8px; text-decoration: none; font-size: .8rem; font-weight: 750; }
+.admin-nav a.active { color: #fff; background: var(--blue); }
+.admin-grid { display: grid; grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.admin-form, .admin-list { padding: 22px; background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 10px 28px rgba(15,23,42,.07); }
+.admin-form { display: flex; flex-direction: column; gap: 15px; }
+.admin-form h2, .admin-list h2 { margin: 0 0 6px; color: var(--navy); font-size: 1.1rem; }
+.admin-form > label, .admin-form-row label { display: flex; flex-direction: column; gap: 6px; color: #3f4a5d; font-size: .74rem; font-weight: 700; }
+.admin-form input, .admin-form select, .admin-form textarea { width: 100%; padding: 10px 11px; border: 1px solid #d6dde8; border-radius: 8px; font: inherit; }
+.admin-form textarea { min-height: 80px; resize: vertical; }
+.admin-form .check-field { align-items: center; flex-direction: row; }
+.admin-form .check-field input, .days-grid input { width: auto; }
+.admin-form fieldset { margin: 0; padding: 12px; border: 1px solid var(--line); border-radius: 9px; }
+.admin-form legend { color: #3f4a5d; font-size: .74rem; font-weight: 700; }
+.days-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+.days-grid label { display: flex; align-items: center; gap: 4px; font-size: .72rem; }
+.admin-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.admin-success { padding: 10px; color: #166534; background: #dcfce7; border-radius: 8px; font-size: .76rem; }
+.admin-list { overflow-x: auto; }
+.admin-list table { width: 100%; border-collapse: collapse; }
+.admin-list th, .admin-list td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #edf0f5; font-size: .76rem; }
+.admin-list th { color: #7a8498; font-size: .65rem; text-transform: uppercase; }
+.admin-list td small { display: block; max-width: 240px; margin-top: 4px; color: var(--muted); }
+.admin-list td button { margin: 2px 5px 2px 0; padding: 6px 8px; color: #1d4ed8; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; cursor: pointer; font-size: .68rem; font-weight: 700; }
+.admin-state { min-height: 180px; display: grid; place-items: center; color: var(--muted); }
+@media (max-width: 900px) { .admin-grid { grid-template-columns: 1fr; } }
 
 .students-search {
   display: flex;
