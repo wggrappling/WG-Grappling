@@ -10,6 +10,9 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
   const port = configService.get<number>('PORT');
+  const nodeEnv = configService.get<string>('NODE_ENV');
+  const origins = configService.get<string>('CORS_ORIGIN')?.split(',').map((value) => value.trim()).filter(Boolean) ?? [];
+  app.enableCors({ origin: nodeEnv === 'production' ? origins : origins.length ? origins : ['http://localhost:5173'], credentials: true });
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -32,11 +35,11 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
 
-  SwaggerModule.setup('api', app, document);
+  if (nodeEnv !== 'production') SwaggerModule.setup('api', app, document);
 
   await app.listen(port ?? 3000);
 
-  if (process.env.NODE_ENV === 'production') {
+  if (nodeEnv === 'production') {
     logger.log('API iniciada em modo de produção');
     logger.log('Swagger disponível');
     return;

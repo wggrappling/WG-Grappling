@@ -1,9 +1,10 @@
 import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
+import { PrismaService } from './prisma/prisma.service';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly appService: AppService, private readonly prisma: PrismaService) {}
 
   @Get()
   getHello() {
@@ -11,11 +12,12 @@ export class AppController {
   }
 
   @Get('health')
-  getHealth() {
-    return {
-      status: 'ok',
-      service: 'WG Grappling API',
-      timestamp: new Date(),
-    };
+  async getHealth() {
+    try {
+      await this.prisma.$queryRaw`SELECT 1`;
+      return { status: 'ok', database: 'up' };
+    } catch {
+      return { status: 'degraded', database: 'down' };
+    }
   }
 }
