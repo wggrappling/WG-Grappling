@@ -8,6 +8,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../../generated/prisma/enums';
 import { StudentQueryDto } from './dto/student-query.dto';
+import { Audit } from '../audit/audit.decorator';
 
 @ApiTags('Students')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -37,6 +38,7 @@ export class StudentsController {
   history(@Param('id') id: string, @Request() req: any) { return this.studentsService.history(Number(id), req.user); }
 
   @Post()
+  @Audit({ action: 'CREATE', entity: 'Student' })
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION)
   @ApiOperation({ summary: 'Criar novo estudante' })
   @ApiBody({ type: CreateStudentDto })
@@ -46,6 +48,7 @@ export class StudentsController {
   }
 
   @Patch(':id')
+  @Audit({ action: 'UPDATE', entity: 'Student', entityIdParam: 'id' })
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Atualizar estudante' })
   @ApiParam({ name: 'id', description: 'ID do estudante' })

@@ -9,6 +9,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../../generated/prisma/enums';
 import { CreatePaymentDto } from './dto/create-payment.dto';
+import { Audit } from '../audit/audit.decorator';
 
 @ApiTags('Charges')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -44,6 +45,7 @@ export class ChargeController {
   }
 
   @Post(':id/payments')
+  @Audit({ action: 'REGISTER_PAYMENT', entity: 'Charge', entityIdParam: 'id' })
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION)
   @ApiOperation({ summary: 'Registrar pagamento manual de uma cobrança' })
   @ApiBody({ type: CreatePaymentDto })

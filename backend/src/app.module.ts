@@ -21,6 +21,7 @@ import { ResponsibleModule } from './responsible/responsible.module';
 import { DocumentsModule } from './documents/documents.module';
 import { envValidationSchema } from './config/env.validation';
 import { GraduationModule } from './graduation/graduation.module';
+import { AuditModule } from './audit/audit.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { GraduationModule } from './graduation/graduation.module';
     ResponsibleModule,
     DocumentsModule,
     GraduationModule,
+    AuditModule,
   ],
   controllers: [AppController],
   providers: [AppService],

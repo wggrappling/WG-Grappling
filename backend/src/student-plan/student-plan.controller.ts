@@ -7,6 +7,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../../generated/prisma/enums';
+import { Audit } from '../audit/audit.decorator';
 
 @ApiTags('StudentPlan')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -31,6 +32,7 @@ export class StudentPlanController {
   }
 
   @Post()
+  @Audit({ action: 'CHANGE_PLAN', entity: 'StudentPlan' })
   @ApiOperation({ summary: 'Criar nova associação estudante-plano' })
   @ApiBody({ type: CreateStudentPlanDto })
   @ApiResponse({ status: 201, description: 'Associação criada com sucesso.' })
@@ -39,6 +41,7 @@ export class StudentPlanController {
   }
 
   @Patch(':id')
+  @Audit({ action: 'CHANGE_PLAN', entity: 'StudentPlan', entityIdParam: 'id' })
   @ApiOperation({ summary: 'Atualizar associação estudante-plano' })
   @ApiParam({ name: 'id', description: 'ID da associação' })
   @ApiBody({ type: UpdateStudentPlanDto })

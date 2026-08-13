@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiBody, ApiOperation, ApiResponse, ApiTags, ApiOkRespon
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { Audit } from '../audit/audit.decorator';
 
 @ApiTags('Autenticação')
 @Controller('auth')
@@ -10,6 +11,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
+  @Audit({ action: 'LOGIN_SUCCESS', entity: 'User' })
   @ApiOperation({ summary: 'Login de usuário' })
   @ApiBody({ type: LoginDto, description: 'Credenciais para autenticação' })
   @ApiOkResponse({

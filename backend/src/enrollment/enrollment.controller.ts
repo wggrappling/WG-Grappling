@@ -7,6 +7,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../../generated/prisma/enums';
 import { MaintainEnrollmentDto } from './dto/maintain-enrollment.dto';
+import { Audit } from '../audit/audit.decorator';
 
 @ApiTags('Enrollment')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -15,6 +16,7 @@ export class EnrollmentController {
   constructor(private readonly enrollmentService: EnrollmentService) {}
 
   @Post()
+  @Audit({ action: 'CREATE', entity: 'Enrollment' })
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION)
   @ApiOperation({ summary: 'Realizar matrícula completa do aluno' })
   @ApiResponse({ status: 201, description: 'Matrícula realizada com sucesso.' })
@@ -25,6 +27,7 @@ export class EnrollmentController {
   }
 
   @Patch(':studentId')
+  @Audit({ action: 'UPDATE', entity: 'Enrollment', entityIdParam: 'studentId' })
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION)
   @ApiOperation({ summary: 'Manutenção transacional dos dados e vínculos da matrícula' })
   maintain(@Param('studentId') studentId: string, @Body() dto: MaintainEnrollmentDto) {

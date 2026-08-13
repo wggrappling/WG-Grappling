@@ -9,6 +9,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../../generated/prisma/enums';
 import { AttendanceQueryDto } from './dto/attendance-query.dto';
+import { Audit } from '../audit/audit.decorator';
 
 @ApiTags('Attendance')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -34,6 +35,7 @@ export class AttendanceController {
   }
 
   @Post()
+  @Audit({ action: 'REGISTER', entity: 'Attendance' })
   @ApiOperation({ summary: 'Criar novo registro de presença' })
   @ApiBody({ type: CreateAttendanceDto })
   @ApiResponse({ status: 201, description: 'Registro criado com sucesso.' })
@@ -43,6 +45,7 @@ export class AttendanceController {
   }
 
   @Post('batch')
+  @Audit({ action: 'REGISTER_BATCH', entity: 'Attendance' })
   @ApiOperation({ summary: 'Registrar presença de toda a turma em uma única operação' })
   @ApiBody({ type: CreateAttendanceBatchDto })
   @ApiResponse({ status: 201, description: 'Presenças registradas com sucesso.' })

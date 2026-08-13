@@ -56,6 +56,23 @@ model User {
   classes          Class[]
   uploadedDocuments Document[] @relation("UploadedDocuments")
   graduations       Graduation[]
+  auditLogs         AuditLog[]
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([entity, action])
+  @@index([userId])
 }
 
 enum StudentStatus {

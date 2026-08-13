@@ -10,6 +10,7 @@ import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { UploadDocumentDto } from './dto/upload-document.dto';
 import { DocumentsService, type UploadedDocumentFile } from './documents.service';
+import { Audit } from '../audit/audit.decorator';
 
 type AuthRequest = { user: { id: number; role: UserRole } };
 const documentRoles = [UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION];
@@ -38,6 +39,7 @@ export class DocumentsController {
   @Get('students/:studentId/documents') findByStudent(@Param('studentId') studentId: string) { return this.documentsService.findByStudent(Number(studentId)); }
 
   @Post('students/:studentId/documents')
+  @Audit({ action: 'UPLOAD', entity: 'Document' })
   @Roles(...documentRoles)
   @ApiConsumes('multipart/form-data')
   @ApiBody({ schema: { type: 'object', required: ['file', 'type'], properties: { file: { type: 'string', format: 'binary' }, type: { type: 'string' } } } })
@@ -50,6 +52,7 @@ export class DocumentsController {
   @Patch('documents/:id') update(@Param('id') id: string, @Body() dto: UpdateDocumentDto) { return this.documentsService.update(Number(id), dto); }
 
   @Delete('documents/:id')
+  @Audit({ action: 'DELETE', entity: 'Document', entityIdParam: 'id' })
   @Roles(...documentRoles)
   remove(@Param('id') id: string, @Request() req: AuthRequest) { return this.documentsService.remove(Number(id), req.user); }
 }
