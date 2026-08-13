@@ -74,7 +74,7 @@ export function StudentCentralPage() {
           <div className="student-title-row">
             <h1 id="student-name">{student.person.name}</h1>
             <span className="status-badge">{statusLabels[student.status]}</span>
-            {(user?.role === 'OWNER' || user?.role === 'ADMIN') && <button type="button" className="student-edit-button" onClick={() => setEditing(true)}>Editar aluno</button>}
+            {user?.role !== 'TEACHER' && <button type="button" className="student-edit-button" onClick={() => setEditing(true)}>Editar aluno</button>}
           </div>
 
           <dl className="student-metadata">
