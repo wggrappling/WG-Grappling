@@ -20,6 +20,7 @@ import { AddressModule } from './address/address.module';
 import { ResponsibleModule } from './responsible/responsible.module';
 import { DocumentsModule } from './documents/documents.module';
 import { envValidationSchema } from './config/env.validation';
+import { GraduationModule } from './graduation/graduation.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { envValidationSchema } from './config/env.validation';
     AddressModule,
     ResponsibleModule,
     DocumentsModule,
+    GraduationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

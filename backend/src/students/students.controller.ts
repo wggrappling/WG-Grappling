@@ -32,6 +32,10 @@ export class StudentsController {
     return this.studentsService.findOne(Number(id), req.user);
   }
 
+  @Get(':id/history')
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION, UserRole.TEACHER)
+  history(@Param('id') id: string, @Request() req: any) { return this.studentsService.history(Number(id), req.user); }
+
   @Post()
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION)
   @ApiOperation({ summary: 'Criar novo estudante' })

@@ -1,0 +1,1 @@
+import{Module}from'@nestjs/common';import{PrismaModule}from'../prisma/prisma.module';import{GraduationController}from'./graduation.controller';import{GraduationService}from'./graduation.service';@Module({imports:[PrismaModule],controllers:[GraduationController],providers:[GraduationService]})export class GraduationModule{}

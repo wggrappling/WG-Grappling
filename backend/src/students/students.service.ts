@@ -94,6 +94,24 @@ export class StudentsService {
     });
   }
 
+  async history(id: number, user?: UserContext) {
+    const student = await this.findOne(id, user); if (!student) throw new Error('Aluno não encontrado.');
+    const [graduations, attendances, documents, charges, plans] = await Promise.all([
+      this.prisma.graduation.findMany({ where: { studentId: id }, include: { modality: { select: { name: true } }, actor: { select: { name: true } } } }),
+      this.prisma.attendance.findMany({ where: { studentId: id }, include: { class: { select: { name: true } } } }),
+      this.prisma.document.findMany({ where: { studentId: id, status: { not: 'DELETED' } }, include: { uploader: { select: { name: true } } } }),
+      this.prisma.charge.findMany({ where: { studentId: id }, include: { payments: true } }),
+      this.prisma.studentPlan.findMany({ where: { studentId: id }, include: { plan: { select: { name: true } } } }),
+    ]);
+    const events:any[]=[{id:`enrollment-${id}`,type:'ENROLLMENT',date:student.joinedAt,description:'Matrícula do aluno registrada.',actor:null,reference:{entity:'Student',id}}];
+    graduations.forEach(g=>events.push({id:`graduation-${g.id}`,type:'GRADUATION',date:g.graduatedAt,description:`Graduação ${g.belt} registrada em ${g.modality.name}.`,actor:g.actor?.name??null,reference:{entity:'Graduation',id:g.id}}));
+    attendances.forEach(a=>events.push({id:`attendance-${a.id}`,type:'ATTENDANCE',date:a.attendanceDate,description:`Presença ${a.status} em ${a.class.name}.`,actor:null,reference:{entity:'Attendance',id:a.id}}));
+    documents.forEach(d=>events.push({id:`document-${d.id}`,type:'DOCUMENT',date:d.createdAt,description:`Documento ${d.originalName} registrado.`,actor:d.uploader?.name??null,reference:{entity:'Document',id:d.id}}));
+    charges.forEach(c=>{events.push({id:`charge-${c.id}`,type:'CHARGE',date:c.createdAt,description:`Cobrança: ${c.description} (${c.status}).`,actor:null,reference:{entity:'Charge',id:c.id}});c.payments.forEach(p=>events.push({id:`payment-${p.id}`,type:'PAYMENT',date:p.paidAt,description:`Pagamento registrado (${p.method}).`,actor:null,reference:{entity:'Payment',id:p.id}}))});
+    plans.forEach(p=>events.push({id:`plan-${p.id}`,type:'ENROLLMENT_CHANGE',date:p.createdAt,description:`Plano ${p.plan.name} vinculado (${p.status}).`,actor:null,reference:{entity:'StudentPlan',id:p.id}}));
+    return events.sort((a,b)=>new Date(b.date).getTime()-new Date(a.date).getTime());
+  }
+
   async update(id: number, updateStudentDto: UpdateStudentDto) {
     return await this.prisma.student.update({
       where: { id },

@@ -55,6 +55,7 @@ model User {
 
   classes          Class[]
   uploadedDocuments Document[] @relation("UploadedDocuments")
+  graduations       Graduation[]
 }
 
 enum StudentStatus {
@@ -67,6 +68,14 @@ enum StudentModalityStatus {
   ACTIVE
   PAUSED
   FINISHED
+}
+
+enum BeltRank {
+  WHITE
+  BLUE
+  PURPLE
+  BROWN
+  BLACK
 }
 
 enum DocumentType {
@@ -101,6 +110,7 @@ model Student {
   charges        Charge[]
   responsibles   StudentResponsible[]
   documents      Document[]
+  graduations    Graduation[]
   person         Person              @relation(fields: [personId], references: [id])
 }
 
@@ -164,6 +174,24 @@ model Modality {
 
   studentModalities StudentModality[]
   classes           Class[]
+  graduations       Graduation[]
+}
+
+model Graduation {
+  id Int @id @default(autoincrement())
+  studentId Int
+  modalityId Int
+  belt BeltRank
+  beltStartedAt DateTime
+  graduatedAt DateTime
+  notes String?
+  graduatedBy Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  student Student @relation(fields: [studentId], references: [id])
+  modality Modality @relation(fields: [modalityId], references: [id])
+  actor User @relation(fields: [graduatedBy], references: [id])
+  @@index([studentId, graduatedAt])
 }
 
 model Plan {
