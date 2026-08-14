@@ -22,11 +22,18 @@ export class EnrollmentService {
     if (hasExistingStudent === hasNewStudentData || (!hasExistingStudent && (!person || !newStudent))) {
       throw new BadRequestException('Informe studentId ou person e student, nunca ambos.');
     }
+    if (hasExistingStudent && (dto.address || dto.responsible)) {
+      throw new BadRequestException('Endereço e responsável só podem ser informados para um novo aluno.');
+    }
 
     if (hasExistingStudent) {
       const existingStudent = await this.prisma.student.findUnique({ where: { id: studentId } });
       if (!existingStudent) throw new NotFoundException(`Student com id ${studentId} não encontrado.`);
     } else {
+      if (!this.isValidCpf(person!.cpf)) throw new BadRequestException('CPF inválido.');
+      if (dto.responsible && !this.isValidCpf(dto.responsible.cpf)) {
+        throw new BadRequestException('CPF do responsável inválido.');
+      }
       const duplicatePerson = await this.prisma.person.findFirst({
         where: { OR: [{ cpf: person!.cpf }, { email: person!.email }] },
         select: { id: true },
@@ -42,20 +49,38 @@ export class EnrollmentService {
       }
     }
 
-    const plan = await this.prisma.plan.findUnique({ where: { id: planId } });
+    if (!hasExistingStudent && dto.responsible) {
+      const duplicateResponsible = await this.prisma.responsible.findUnique({
+        where: { cpf: dto.responsible.cpf },
+        select: { id: true },
+      });
+      if (duplicateResponsible) throw new ConflictException('Já existe um responsável com este CPF.');
+    }
+
+    const plan = await this.prisma.plan.findFirst({ where: { id: planId, active: true } });
     if (!plan) throw new NotFoundException(`Plan com id ${planId} não encontrado.`);
 
     if (modalityIds.length > 0) {
-      const modalities = await this.prisma.modality.findMany({ where: { id: { in: modalityIds } } });
+      const modalities = await this.prisma.modality.findMany({ where: { id: { in: modalityIds }, active: true } });
       if (modalities.length !== modalityIds.length) {
         throw new NotFoundException('Uma ou mais modalidades informadas não foram encontradas.');
       }
     }
 
     if (classIds.length > 0) {
-      const classes = await this.prisma.class.findMany({ where: { id: { in: classIds } } });
+      const classes = await this.prisma.class.findMany({
+        where: { id: { in: classIds }, active: true, teacher: { active: true } },
+        include: { _count: { select: { studentClasses: true } } },
+      });
       if (classes.length !== classIds.length) {
         throw new NotFoundException('Uma ou mais turmas informadas não foram encontradas.');
+      }
+      const selectedModalities = new Set(modalityIds);
+      if (classes.some((item) => !selectedModalities.has(item.modalityId))) {
+        throw new ConflictException('Turma incompatível com as modalidades selecionadas.');
+      }
+      if (classes.some((item) => item._count.studentClasses >= item.capacity)) {
+        throw new ConflictException('Uma ou mais turmas atingiram a capacidade.');
       }
     }
 
@@ -75,6 +100,16 @@ export class EnrollmentService {
           },
         });
         enrolledStudentId = createdStudent.id;
+
+        if (dto.address) {
+          await tx.address.create({ data: { ...dto.address, personId: createdPerson.id } });
+        }
+        if (dto.responsible) {
+          const responsible = await tx.responsible.create({ data: dto.responsible });
+          await tx.studentResponsible.create({
+            data: { studentId: createdStudent.id, responsibleId: responsible.id },
+          });
+        }
       }
 
       const createdStudentPlan = await tx.studentPlan.create({
@@ -102,6 +137,20 @@ export class EnrollmentService {
     });
 
     return { message: 'Matrícula realizada com sucesso!', data: result };
+  }
+
+  private isValidCpf(value: string) {
+    const cpf = value.replace(/\D/g, '');
+    if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+    const digit = (length: number) => {
+      const sum = cpf.slice(0, length).split('').reduce(
+        (total, number, index) => total + Number(number) * (length + 1 - index),
+        0,
+      );
+      const remainder = (sum * 10) % 11;
+      return remainder === 10 ? 0 : remainder;
+    };
+    return digit(9) === Number(cpf[9]) && digit(10) === Number(cpf[10]);
   }
 
   async maintain(studentId: number, dto: MaintainEnrollmentDto) {

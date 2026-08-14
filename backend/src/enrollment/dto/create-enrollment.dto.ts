@@ -9,6 +9,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Length,
   Max,
   Min,
   ValidateIf,
@@ -16,6 +17,18 @@ import {
 } from 'class-validator';
 import { StudentStatus } from '../../../generated/prisma/enums';
 import { CreatePersonDto } from '../../people/dto/create-person.dto';
+import { CreateResponsibleDto } from '../../responsible/dto/create-responsible.dto';
+
+export class EnrollmentAddressDto {
+  @IsString() @IsNotEmpty() street: string;
+  @IsOptional() @IsString() number?: string;
+  @IsOptional() @IsString() complement?: string;
+  @IsString() @IsNotEmpty() neighborhood: string;
+  @IsString() @IsNotEmpty() city: string;
+  @IsString() @Length(2, 2) state: string;
+  @IsString() @IsNotEmpty() zipCode: string;
+  @IsOptional() @IsString() country?: string;
+}
 
 export class EnrollmentStudentDto {
   @ApiProperty({ example: '2026-001', required: false, description: 'Gerado automaticamente quando omitido' })
@@ -58,6 +71,18 @@ export class CreateEnrollmentDto {
   @ValidateNested()
   @Type(() => EnrollmentStudentDto)
   student?: EnrollmentStudentDto;
+
+  @ApiProperty({ type: EnrollmentAddressDto, required: false })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => EnrollmentAddressDto)
+  address?: EnrollmentAddressDto;
+
+  @ApiProperty({ type: CreateResponsibleDto, required: false })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CreateResponsibleDto)
+  responsible?: CreateResponsibleDto;
 
   @ApiProperty({ example: 1, description: 'ID do plano' })
   @IsInt()

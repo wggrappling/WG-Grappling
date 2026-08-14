@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { EnrollmentService } from './enrollment.service';
 
 describe('EnrollmentService', () => {
@@ -8,11 +8,15 @@ describe('EnrollmentService', () => {
     studentPlan: { create: jest.fn() },
     studentModality: { create: jest.fn() },
     studentClass: { create: jest.fn() },
+    address: { create: jest.fn() },
+    responsible: { create: jest.fn() },
+    studentResponsible: { create: jest.fn() },
   };
   const prisma = {
     student: { findUnique: jest.fn() },
     person: { findFirst: jest.fn() },
-    plan: { findUnique: jest.fn() },
+    responsible: { findUnique: jest.fn() },
+    plan: { findFirst: jest.fn() },
     modality: { findMany: jest.fn() },
     class: { findMany: jest.fn() },
     $transaction: jest.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
@@ -24,14 +28,18 @@ describe('EnrollmentService', () => {
     jest.clearAllMocks();
     prisma.person.findFirst.mockResolvedValue(null);
     prisma.student.findUnique.mockResolvedValue(null);
-    prisma.plan.findUnique.mockResolvedValue({ id: 2 });
+    prisma.responsible.findUnique.mockResolvedValue(null);
+    prisma.plan.findFirst.mockResolvedValue({ id: 2, active: true });
     prisma.modality.findMany.mockResolvedValue([{ id: 3 }]);
-    prisma.class.findMany.mockResolvedValue([{ id: 4 }]);
+    prisma.class.findMany.mockResolvedValue([{ id: 4, modalityId: 3, capacity: 20, _count: { studentClasses: 0 } }]);
     tx.person.create.mockResolvedValue({ id: 10 });
     tx.student.create.mockResolvedValue({ id: 20 });
     tx.studentPlan.create.mockResolvedValue({ id: 30 });
     tx.studentModality.create.mockResolvedValue({ id: 40 });
     tx.studentClass.create.mockResolvedValue({ id: 50 });
+    tx.address.create.mockResolvedValue({ id: 60 });
+    tx.responsible.create.mockResolvedValue({ id: 70 });
+    tx.studentResponsible.create.mockResolvedValue({ id: 80 });
   });
 
   const base = {
@@ -57,14 +65,18 @@ describe('EnrollmentService', () => {
   it('cria pessoa, aluno e matrícula na mesma transação', async () => {
     const response = await service.create({
       ...base,
-      person: { name: 'Aluno Novo', cpf: '12345678901', email: 'aluno@example.com' },
+      person: { name: 'Aluno Novo', cpf: '52998224725', email: 'aluno@example.com' },
       student: {},
+      address: { street: 'Rua A', neighborhood: 'Centro', city: 'São Paulo', state: 'SP', zipCode: '01001000' },
+      responsible: { name: 'Responsável', cpf: '11144477735', relationship: 'Mãe' },
     });
 
     expect(tx.person.create).toHaveBeenCalled();
     expect(tx.student.create).toHaveBeenCalledWith(expect.objectContaining({
       data: expect.objectContaining({ personId: 10, enrollmentNumber: 'WG-2026-000010' }),
     }));
+    expect(tx.address.create).toHaveBeenCalledWith({ data: expect.objectContaining({ personId: 10 }) });
+    expect(tx.studentResponsible.create).toHaveBeenCalledWith({ data: { studentId: 20, responsibleId: 70 } });
     expect(chargeGenerator.generateEnrollmentCharges).toHaveBeenCalledWith(20, 2, expect.any(Date), 10, 150, tx);
     expect(response.data.studentId).toBe(20);
   });
@@ -73,7 +85,7 @@ describe('EnrollmentService', () => {
     await expect(service.create({
       ...base,
       studentId: 7,
-      person: { name: 'Aluno Novo', cpf: '12345678901', email: 'aluno@example.com' },
+      person: { name: 'Aluno Novo', cpf: '52998224725', email: 'aluno@example.com' },
       student: {},
     })).rejects.toBeInstanceOf(BadRequestException);
     expect(prisma.$transaction).not.toHaveBeenCalled();
@@ -84,9 +96,85 @@ describe('EnrollmentService', () => {
 
     await expect(service.create({
       ...base,
-      person: { name: 'Aluno Novo', cpf: '12345678901', email: 'aluno@example.com' },
+      person: { name: 'Aluno Novo', cpf: '52998224725', email: 'aluno@example.com' },
       student: {},
     })).rejects.toBeInstanceOf(ConflictException);
     expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('rejeita plano inexistente ou inativo', async () => {
+    prisma.plan.findFirst.mockResolvedValue(null);
+    await expect(service.create({
+      ...base,
+      person: { name: 'Aluno Novo', cpf: '52998224725', email: 'aluno@example.com' },
+      student: {},
+    })).rejects.toBeInstanceOf(NotFoundException);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('rejeita turma incompatível com a modalidade', async () => {
+    prisma.class.findMany.mockResolvedValue([{ id: 4, modalityId: 99, capacity: 20, _count: { studentClasses: 0 } }]);
+    await expect(service.create({
+      ...base,
+      person: { name: 'Aluno Novo', cpf: '52998224725', email: 'aluno@example.com' },
+      student: {},
+    })).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('rejeita turma sem capacidade', async () => {
+    prisma.class.findMany.mockResolvedValue([{ id: 4, modalityId: 3, capacity: 20, _count: { studentClasses: 20 } }]);
+    await expect(service.create({
+      ...base,
+      person: { name: 'Aluno Novo', cpf: '52998224725', email: 'aluno@example.com' },
+      student: {},
+    })).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('rejeita modalidade inativa ou inexistente', async () => {
+    prisma.modality.findMany.mockResolvedValue([]);
+    await expect(service.create({
+      ...base,
+      person: { name: 'Aluno Novo', cpf: '52998224725', email: 'aluno@example.com' },
+      student: {},
+    })).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('rejeita turma inativa ou com professor inativo', async () => {
+    prisma.class.findMany.mockResolvedValue([]);
+    await expect(service.create({
+      ...base,
+      person: { name: 'Aluno Novo', cpf: '52998224725', email: 'aluno@example.com' },
+      student: {},
+    })).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('propaga falha de Person dentro da transação sem avançar o cadastro', async () => {
+    tx.person.create.mockRejectedValueOnce(new Error('person failed'));
+    await expect(service.create({
+      ...base,
+      person: { name: 'Aluno Novo', cpf: '52998224725', email: 'aluno@example.com' },
+      student: {},
+    })).rejects.toThrow('person failed');
+    expect(tx.student.create).not.toHaveBeenCalled();
+  });
+
+  it('propaga falha de Student dentro da transação sem criar matrícula', async () => {
+    tx.student.create.mockRejectedValueOnce(new Error('student failed'));
+    await expect(service.create({
+      ...base,
+      person: { name: 'Aluno Novo', cpf: '52998224725', email: 'aluno@example.com' },
+      student: {},
+    })).rejects.toThrow('student failed');
+    expect(tx.studentPlan.create).not.toHaveBeenCalled();
+  });
+
+  it('propaga falha da matrícula e não gera cobranças', async () => {
+    tx.studentPlan.create.mockRejectedValueOnce(new Error('enrollment failed'));
+    await expect(service.create({
+      ...base,
+      person: { name: 'Aluno Novo', cpf: '52998224725', email: 'aluno@example.com' },
+      student: {},
+    })).rejects.toThrow('enrollment failed');
+    expect(chargeGenerator.generateEnrollmentCharges).not.toHaveBeenCalled();
   });
 });
