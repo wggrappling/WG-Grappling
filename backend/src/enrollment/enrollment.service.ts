@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { StudentModalityStatus, StudentPlanStatus, StudentStatus } from '../../generated/prisma/enums';
+import { ChargeStatus, StudentModalityStatus, StudentPlanStatus, StudentStatus } from '../../generated/prisma/enums';
 import { ChargeGeneratorService } from '../charge/charge-generator.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
@@ -12,7 +12,7 @@ export class EnrollmentService {
     private readonly chargeGeneratorService: ChargeGeneratorService,
   ) {}
 
-  async create(dto: CreateEnrollmentDto) {
+  async create(dto: CreateEnrollmentDto, actorId?: number) {
     const { studentId, person, student: newStudent, planId, monthlyPrice, billingDay, startDate } = dto;
     const modalityIds = [...new Set(dto.modalityIds ?? [])];
     const classIds = [...new Set(dto.classIds ?? [])];
@@ -125,6 +125,17 @@ export class EnrollmentService {
       await this.chargeGeneratorService.generateEnrollmentCharges(
         enrolledStudentId, planId, new Date(startDate), billingDay, monthlyPrice, tx,
       );
+      if (actorId !== undefined) {
+        await tx.auditLog.create({
+          data: {
+            userId: actorId,
+            action: 'STUDENT_PLAN_CREATED',
+            entity: 'StudentPlan',
+            entityId: String(createdStudentPlan.id),
+            metadata: { studentId: enrolledStudentId, planId, monthlyPrice, billingDay, startDate },
+          },
+        });
+      }
 
       return {
         studentId: enrolledStudentId,
@@ -153,7 +164,7 @@ export class EnrollmentService {
     return digit(9) === Number(cpf[9]) && digit(10) === Number(cpf[10]);
   }
 
-  async maintain(studentId: number, dto: MaintainEnrollmentDto) {
+  async maintain(studentId: number, dto: MaintainEnrollmentDto, actorId?: number) {
     return this.prisma.$transaction(async (tx) => {
       const student = await tx.student.findUnique({ where: { id: studentId }, include: { person: { select: { id: true } } } });
       if (!student) throw new NotFoundException('Aluno não encontrado.');
@@ -171,11 +182,37 @@ export class EnrollmentService {
         const activePlans = await tx.studentPlan.findMany({ where: { studentId, status: StudentPlanStatus.ACTIVE } });
         if (activePlans.length > 1) throw new ConflictException('Aluno possui mais de um plano ativo; regularize antes da troca.');
         const current = activePlans[0]; const startDate = new Date(dto.plan.startDate);
+        const changesTerms = current
+          && current.planId === dto.plan.planId
+          && (Number(current.monthlyPrice) !== dto.plan.monthlyPrice || current.billingDay !== dto.plan.billingDay);
+        const changesPlan = current && current.planId !== dto.plan.planId;
+        let cancelledChargeCount = 0;
+        if (changesPlan || changesTerms) {
+          const cancelled = await tx.charge.updateMany({
+            where: {
+              studentId,
+              planId: current!.planId,
+              status: ChargeStatus.PENDING,
+              dueDate: { gte: startDate },
+            },
+            data: { status: ChargeStatus.CANCELLED },
+          });
+          cancelledChargeCount = cancelled.count;
+        }
         if (current?.planId === dto.plan.planId) {
           await tx.studentPlan.update({ where: { id: current.id }, data: { monthlyPrice: dto.plan.monthlyPrice, billingDay: dto.plan.billingDay } });
         } else {
           if (current) await tx.studentPlan.update({ where: { id: current.id }, data: { status: StudentPlanStatus.FINISHED, endDate: startDate } });
-          await tx.studentPlan.create({ data: { studentId, planId: dto.plan.planId, startDate, monthlyPrice: dto.plan.monthlyPrice, billingDay: dto.plan.billingDay, status: StudentPlanStatus.ACTIVE } });
+          const created = await tx.studentPlan.create({ data: { studentId, planId: dto.plan.planId, startDate, monthlyPrice: dto.plan.monthlyPrice, billingDay: dto.plan.billingDay, status: StudentPlanStatus.ACTIVE } });
+          if (actorId !== undefined) {
+            await tx.auditLog.create({ data: { userId: actorId, action: 'STUDENT_PLAN_CHANGED', entity: 'StudentPlan', entityId: String(created.id), metadata: { studentId, ...(current ? { previousStudentPlanId: current.id, previousPlanId: current.planId } : {}), planId: dto.plan.planId, monthlyPrice: dto.plan.monthlyPrice, billingDay: dto.plan.billingDay, startDate: dto.plan.startDate } } });
+          }
+        }
+        if (changesTerms && actorId !== undefined) {
+          await tx.auditLog.create({ data: { userId: actorId, action: 'STUDENT_PLAN_TERMS_UPDATED', entity: 'StudentPlan', entityId: String(current.id), metadata: { studentId, planId: current.planId, previousMonthlyPrice: Number(current.monthlyPrice), monthlyPrice: dto.plan.monthlyPrice, previousBillingDay: current.billingDay, billingDay: dto.plan.billingDay, effectiveFrom: dto.plan.startDate } } });
+        }
+        if (cancelledChargeCount > 0 && actorId !== undefined) {
+          await tx.auditLog.create({ data: { userId: actorId, action: 'FUTURE_PENDING_CHARGES_CANCELLED', entity: 'Charge', metadata: { studentId, planId: current?.planId, count: cancelledChargeCount, effectiveFrom: dto.plan.startDate } } });
         }
       }
 

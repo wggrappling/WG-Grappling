@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Request, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiParam } from '@nestjs/swagger';
 import { StudentPlanService } from './student-plan.service';
 import { CreateStudentPlanDto } from './dto/create-student-plan.dto';
@@ -51,10 +51,11 @@ export class StudentPlanController {
   }
 
   @Delete(':id')
+  @Audit({ action: 'END_PLAN', entity: 'StudentPlan', entityIdParam: 'id' })
   @ApiOperation({ summary: 'Remover associação estudante-plano' })
   @ApiParam({ name: 'id', description: 'ID da associação' })
   @ApiResponse({ status: 200, description: 'Associação removida com sucesso.' })
-  remove(@Param('id') id: string) {
-    return this.studentPlanService.remove(Number(id));
+  remove(@Param('id') id: string, @Request() req: any) {
+    return this.studentPlanService.remove(Number(id), req.user?.id);
   }
 }

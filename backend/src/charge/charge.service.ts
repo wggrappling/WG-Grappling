@@ -38,7 +38,7 @@ export class ChargeService {
     return this.prisma.payment.findMany({ where: { chargeId: id }, orderBy: { paidAt: 'desc' } });
   }
 
-  async registerPayment(id: number, dto: CreatePaymentDto) {
+  async registerPayment(id: number, dto: CreatePaymentDto, actorId?: number) {
     return this.prisma.$transaction(async (tx) => {
       const charge = await tx.charge.findUnique({ where: { id }, include: { payments: true } });
       if (!charge) throw new NotFoundException(`Cobrança com id ${id} não encontrada.`);
@@ -59,6 +59,17 @@ export class ChargeService {
       const updatedTotalPaid = totalPaid + dto.amount;
       const status = updatedTotalPaid >= Number(charge.finalAmount) ? ChargeStatus.PAID : ChargeStatus.PARTIALLY_PAID;
       await tx.charge.update({ where: { id }, data: { status } });
+      if (actorId !== undefined) {
+        await tx.auditLog.create({
+          data: {
+            userId: actorId,
+            action: 'PAYMENT_REGISTERED',
+            entity: 'Payment',
+            entityId: String(payment.id),
+            metadata: { chargeId: id, amount: dto.amount, method: dto.method, paidAt: dto.paidAt, resultingChargeStatus: status },
+          },
+        });
+      }
 
       return {
         message: status === ChargeStatus.PAID ? 'Pagamento registrado e cobrança quitada.' : 'Pagamento parcial registrado.',
@@ -75,11 +86,22 @@ export class ChargeService {
   }
 
   async update(id: number, dto: UpdateChargeDto) {
+    const existing = await this.prisma.charge.findUnique({ where: { id }, include: { payments: true } });
+    if (!existing) throw new NotFoundException(`Cobrança com id ${id} não encontrada.`);
+    if (existing.status === ChargeStatus.PAID || existing.payments.length > 0) {
+      throw new ConflictException('Cobrança com pagamento não pode ser alterada.');
+    }
     return this.prisma.charge.update({ where: { id }, data: dto, include: chargeInclude });
   }
 
   async remove(id: number) {
-    await this.prisma.charge.delete({ where: { id } });
-    return { message: 'Cobrança removida com sucesso!' };
+    const existing = await this.prisma.charge.findUnique({ where: { id }, include: { payments: true } });
+    if (!existing) throw new NotFoundException(`Cobrança com id ${id} não encontrada.`);
+    if (existing.status === ChargeStatus.CANCELLED) return { message: 'Cobrança já estava cancelada.' };
+    if (existing.status !== ChargeStatus.PENDING || existing.payments.length > 0) {
+      throw new ConflictException('Somente cobrança pendente e sem pagamentos pode ser cancelada.');
+    }
+    await this.prisma.charge.update({ where: { id }, data: { status: ChargeStatus.CANCELLED } });
+    return { message: 'Cobrança cancelada com sucesso!' };
   }
 }

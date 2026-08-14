@@ -6,9 +6,10 @@ describe('ChargeService payments', () => {
   const tx = {
     charge: { findUnique: jest.fn(), update: jest.fn() },
     payment: { create: jest.fn() },
+    auditLog: { create: jest.fn() },
   };
   const prisma = {
-    charge: { findUnique: jest.fn(), findMany: jest.fn() },
+    charge: { findUnique: jest.fn(), findMany: jest.fn(), update: jest.fn() },
     payment: { findMany: jest.fn() },
     $transaction: jest.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
   };
@@ -23,9 +24,10 @@ describe('ChargeService payments', () => {
   });
 
   it('registra pagamento integral e marca como PAID', async () => {
-    const result = await service.registerPayment(1, dto);
+    const result = await service.registerPayment(1, dto, 7);
     expect(result.data).toMatchObject({ totalPaid: 100, balance: 0, status: ChargeStatus.PAID });
     expect(tx.charge.update).toHaveBeenCalledWith({ where: { id: 1 }, data: { status: ChargeStatus.PAID } });
+    expect(tx.auditLog.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ userId: 7, action: 'PAYMENT_REGISTERED', entityId: '10' }) }));
   });
 
   it('registra pagamento parcial e marca como PARTIALLY_PAID', async () => {

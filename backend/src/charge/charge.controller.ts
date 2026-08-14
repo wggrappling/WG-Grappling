@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ChargeService } from './charge.service';
 import { ChargeGeneratorService } from './charge-generator.service';
@@ -49,11 +49,12 @@ export class ChargeController {
   @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION)
   @ApiOperation({ summary: 'Registrar pagamento manual de uma cobrança' })
   @ApiBody({ type: CreatePaymentDto })
-  registerPayment(@Param('id') id: string, @Body() dto: CreatePaymentDto) {
-    return this.chargeService.registerPayment(Number(id), dto);
+  registerPayment(@Param('id') id: string, @Body() dto: CreatePaymentDto, @Request() req: any) {
+    return this.chargeService.registerPayment(Number(id), dto, req.user?.id);
   }
 
   @Post()
+  @Audit({ action: 'CREATE', entity: 'Charge' })
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Criar nova cobrança' })
   @ApiBody({ type: CreateChargeDto })
@@ -71,6 +72,7 @@ export class ChargeController {
   }
 
   @Patch(':id')
+  @Audit({ action: 'UPDATE', entity: 'Charge', entityIdParam: 'id' })
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Atualizar cobrança' })
   @ApiParam({ name: 'id', description: 'ID da cobrança' })
@@ -81,6 +83,7 @@ export class ChargeController {
   }
 
   @Delete(':id')
+  @Audit({ action: 'CANCEL', entity: 'Charge', entityIdParam: 'id' })
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Remover cobrança' })
   @ApiParam({ name: 'id', description: 'ID da cobrança' })
