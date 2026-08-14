@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Request, UseGuards } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ChargeService } from './charge.service';
-import { ChargeGeneratorService } from './charge-generator.service';
+import { FinancialCycleService } from './financial-cycle.service';
 import { CreateChargeDto } from './dto/create-charge.dto';
 import { UpdateChargeDto } from './dto/update-charge.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -17,7 +17,7 @@ import { Audit } from '../audit/audit.decorator';
 export class ChargeController {
   constructor(
     private readonly chargeService: ChargeService,
-    private readonly chargeGeneratorService: ChargeGeneratorService,
+    private readonly financialCycleService: FinancialCycleService,
   ) {}
 
   @Get()
@@ -68,7 +68,7 @@ export class ChargeController {
   @ApiOperation({ summary: 'Gerar mensalidades automáticas para alunos ativos' })
   @ApiResponse({ status: 201, description: 'Cobranças mensais geradas com sucesso.' })
   generateMonthlyCharges() {
-    return this.chargeGeneratorService.generateMonthlyCharges();
+    return this.financialCycleService.run();
   }
 
   @Patch(':id')

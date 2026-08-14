@@ -38,6 +38,14 @@ export class ChargeService {
     return this.prisma.payment.findMany({ where: { chargeId: id }, orderBy: { paidAt: 'desc' } });
   }
 
+  async markOverdue(now = new Date(), tx?: any) {
+    const prismaClient = tx ?? this.prisma;
+    return prismaClient.charge.updateMany({
+      where: { status: ChargeStatus.PENDING, dueDate: { lt: now } },
+      data: { status: ChargeStatus.OVERDUE },
+    });
+  }
+
   async registerPayment(id: number, dto: CreatePaymentDto, actorId?: number) {
     return this.prisma.$transaction(async (tx) => {
       const charge = await tx.charge.findUnique({ where: { id }, include: { payments: true } });

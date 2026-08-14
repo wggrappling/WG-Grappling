@@ -22,6 +22,7 @@ import { DocumentsModule } from './documents/documents.module';
 import { envValidationSchema } from './config/env.validation';
 import { GraduationModule } from './graduation/graduation.module';
 import { AuditModule } from './audit/audit.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { AuditModule } from './audit/audit.module';
         abortEarly: true,
       },
     }),
+    ScheduleModule.forRoot(),
     PeopleModule,
     PrismaModule,
     UsersModule,

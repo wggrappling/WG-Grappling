@@ -20,5 +20,8 @@ export const envValidationSchema = Joi.object({
   NODE_ENV: Joi.string().valid('development', 'production', 'test', 'local').default('development'),
   DOCUMENT_STORAGE_PATH: Joi.string().min(1).default('./storage/documents'),
   DOCUMENT_MAX_SIZE_MB: Joi.number().positive().default(10),
+  FINANCIAL_CYCLE_ENABLED: Joi.boolean().truthy('true').falsy('false').default(false),
+  FINANCIAL_CYCLE_CRON: Joi.string().min(1).default('0 5 * * *'),
+  FINANCIAL_CYCLE_TIME_ZONE: Joi.string().min(1).default('America/Sao_Paulo'),
   CORS_ORIGIN: Joi.string().when('NODE_ENV', { is: 'production', then: Joi.required(), otherwise: Joi.optional() }),
 }).unknown(true).required();
