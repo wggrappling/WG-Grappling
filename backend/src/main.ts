@@ -1,9 +1,9 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 
 import { AppModule } from './app.module';
+import { configureSwagger, logStartup } from './bootstrap-config';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -22,31 +22,11 @@ async function bootstrap() {
     }),
   );
 
-  const config = new DocumentBuilder()
-    .setTitle('WG Grappling API')
-    .setDescription('Sistema de gestão da academia WG Grappling')
-    .setVersion('1.0')
-    .addBearerAuth({
-      type: 'http',
-      scheme: 'bearer',
-      bearerFormat: 'JWT',
-    }, 'access-token')
-    .build();
+  configureSwagger(app, nodeEnv);
 
-  const document = SwaggerModule.createDocument(app, config);
-
-  if (nodeEnv !== 'production') SwaggerModule.setup('api', app, document);
-
-  await app.listen(port ?? 3000);
-
-  if (nodeEnv === 'production') {
-    logger.log('API iniciada em modo de produção');
-    logger.log('Swagger disponível');
-    return;
-  }
-
-  logger.log(`API iniciada em: http://localhost:${port ?? 3000}`);
-  logger.log(`Swagger em: http://localhost:${port ?? 3000}/api`);
+  const listenPort = port ?? 3000;
+  await app.listen(listenPort);
+  logStartup(logger, nodeEnv, listenPort);
 }
 
 bootstrap();

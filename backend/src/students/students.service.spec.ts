@@ -100,4 +100,42 @@ describe('StudentsService', () => {
       await expect(service.findOne(7, { id: 4, role: UserRole.TEACHER })).rejects.toBeInstanceOf(ForbiddenException);
     });
   });
+
+  describe('history', () => {
+    const historyPrisma = (payments: any[]) => ({
+      student: { findFirst: jest.fn().mockResolvedValue({ id: 7, joinedAt: new Date('2026-01-01T00:00:00Z') }) },
+      graduation: { findMany: jest.fn().mockResolvedValue([]) },
+      attendance: { findMany: jest.fn().mockResolvedValue([]) },
+      document: { findMany: jest.fn().mockResolvedValue([]) },
+      charge: { findMany: jest.fn().mockResolvedValue([{ id: 20, description: 'Mensalidade', status: 'PARTIALLY_PAID', createdAt: new Date('2026-01-02T00:00:00Z'), payments }]) },
+      studentPlan: { findMany: jest.fn().mockResolvedValue([]) },
+    }) as unknown as PrismaService;
+
+    it('preserves normal and older payment events', async () => {
+      const service = new StudentsService(historyPrisma([
+        { id: 30, amount: 50, method: 'PIX', paidAt: new Date('2026-01-03T00:00:00Z'), refundedAt: null, refundReason: null, refundedByUser: null },
+        { id: 31, amount: 25, method: 'CASH', paidAt: new Date('2026-01-04T00:00:00Z'), refundedAt: null, refundReason: null, refundedByUser: null },
+      ]));
+
+      const events = await service.history(7);
+      expect(events.filter((event) => event.type === 'PAYMENT')).toHaveLength(2);
+      expect(events.find((event) => event.id === 'payment-30')).toMatchObject({ type: 'PAYMENT', description: 'Pagamento registrado (PIX).' });
+      expect(events.find((event) => event.id === 'enrollment-7')).toBeDefined();
+    });
+
+    it('represents a refunded payment once with value, charge, date, actor and reason', async () => {
+      const refundedAt = new Date('2026-01-05T12:00:00Z');
+      const service = new StudentsService(historyPrisma([
+        { id: 30, amount: '50.00', method: 'PIX', paidAt: new Date('2026-01-03T00:00:00Z'), refundedAt, refundReason: 'Duplicidade', refundedByUser: { name: 'Administradora' } },
+      ]));
+
+      const events = await service.history(7);
+      const paymentEvents = events.filter((event) => event.reference?.entity === 'Payment' && event.reference.id === 30);
+      expect(paymentEvents).toHaveLength(1);
+      expect(paymentEvents[0]).toMatchObject({ id: 'payment-refunded-30', type: 'PAYMENT_REFUNDED', date: refundedAt, actor: 'Administradora' });
+      expect(paymentEvents[0].description).toContain('R$ 50.00');
+      expect(paymentEvents[0].description).toContain('Mensalidade');
+      expect(paymentEvents[0].description).toContain('Duplicidade');
+    });
+  });
 });
