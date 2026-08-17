@@ -40,6 +40,7 @@ export function StudentCentralPage() {
         <section className="student-load-state" role="alert">
           <h1>Não foi possível carregar o aluno</h1>
           <p>{invalidStudentId ? 'O identificador informado é inválido.' : error?.message}</p>
+          <button type="button" className="secondary-action-button" onClick={() => navigate('/students')}>Voltar aos alunos</button>
         </section>
       </main>
     );
@@ -60,7 +61,7 @@ export function StudentCentralPage() {
     <main className="student-profile-page">
       <div className="session-bar">
         <span>Conectado como <strong>{user?.name}</strong></span>
-        <button type="button" onClick={handleLogout}>Sair</button>
+        <div><button type="button" onClick={() => navigate('/students')}>Alunos</button>{user?.role !== 'TEACHER' && <button type="button" onClick={() => navigate('/dashboard')}>Dashboard</button>}<button type="button" onClick={() => navigate('/attendance')}>Chamada</button><button type="button" onClick={handleLogout}>Sair</button></div>
       </div>
 
       <section className="student-profile" aria-labelledby="student-name">

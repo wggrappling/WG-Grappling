@@ -4,8 +4,6 @@ export const studentTabs = [
   'Financeiro',
   'Presença',
   'Graduação',
-  'Comunicação',
-  'Produtos',
   'Histórico',
 ] as const;
 

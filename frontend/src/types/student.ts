@@ -11,7 +11,7 @@ export type StudentPerson = {
 };
 
 export type StudentResponsible = { responsible: { name: string; relationship: string; phone: string | null; email: string | null } };
-export type StudentModality = { id: number; startedAt: string; status: 'ACTIVE' | 'PAUSED' | 'FINISHED'; modality: { id: number; name: string } };
+export type StudentModality = { id: number; startedAt: string; status: 'ACTIVE' | 'PAUSED' | 'FINISHED'; modality: { id: number; name: string; hasGraduation: boolean } };
 export type StudentPlan = { id: number; startDate: string; endDate: string | null; status: 'ACTIVE' | 'PAUSED' | 'CANCELLED' | 'FINISHED'; monthlyPrice: string | number; billingDay: number; plan: { id: number; name: string } };
 export type StudentClass = { id: number; class: { id: number; name: string; active: boolean; weekDays: string[]; startTime: string; endTime: string; modality: { id: number; name: string }; teacher: { id: number; name: string } } };
 

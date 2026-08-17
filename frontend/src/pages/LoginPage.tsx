@@ -17,7 +17,7 @@ export function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   if (!initializing && authenticated) {
-    return <Navigate to="/students/7" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -28,7 +28,7 @@ export function LoginPage() {
     try {
       await login({ email, password });
       const state = location.state as LoginLocationState | null;
-      navigate(state?.from?.pathname || '/students/7', { replace: true });
+      navigate(state?.from?.pathname || '/dashboard', { replace: true });
     } catch (error) {
       setErrorMessage(
         error instanceof ApiClientError
