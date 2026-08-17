@@ -57,6 +57,7 @@ model User {
   uploadedDocuments Document[] @relation("UploadedDocuments")
   graduations       Graduation[]
   auditLogs         AuditLog[]
+  refundedPayments  Payment[] @relation("RefundedPayments")
 }
 
 model AuditLog {
@@ -363,10 +364,16 @@ model Payment {
   reference String?
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
+  refundedAt DateTime?
+  refundReason String?
+  refundedBy Int?
 
   charge Charge @relation(fields: [chargeId], references: [id], onDelete: Restrict)
+  refundedByUser User? @relation("RefundedPayments", fields: [refundedBy], references: [id], onDelete: Restrict)
 
   @@index([chargeId, paidAt])
+  @@index([chargeId, refundedAt])
+  @@index([refundedBy])
 }
 
 model StudentModality {

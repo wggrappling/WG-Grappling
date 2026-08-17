@@ -1,4 +1,4 @@
-import type { ApiListResponse, Charge, CreatePayment } from '../types';
+import type { ApiListResponse, Charge, CreatePayment, RefundPayment } from '../types';
 import { httpService } from './http.service';
 
 export const chargeService = {
@@ -9,5 +9,8 @@ export const chargeService = {
   },
   registerPayment(chargeId: number, payload: CreatePayment): Promise<{ message: string }> {
     return httpService.post<{ message: string }, CreatePayment>(`/charges/${chargeId}/payments`, payload);
+  },
+  refundPayment(paymentId: number, payload: RefundPayment): Promise<{ message: string }> {
+    return httpService.post<{ message: string }, RefundPayment>(`/payments/${paymentId}/refund`, payload);
   },
 };

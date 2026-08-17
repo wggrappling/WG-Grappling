@@ -1,7 +1,8 @@
 import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useApiRequest } from '../../hooks';
+import { useAuth } from '../../hooks/useAuth';
 import { chargeService } from '../../services';
-import type { ApiListResponse, Charge, PaymentMethod } from '../../types';
+import type { ApiListResponse, Charge, Payment, PaymentMethod } from '../../types';
 import { FinancialStatusBadge } from './FinancialStatusBadge';
 import { FinancialSummaryCard, type FinancialSummaryItem } from './FinancialSummaryCard';
 
@@ -13,6 +14,7 @@ const formatCurrency = (value: string | number) => currency.format(Number(value)
 const formatDate = (value: string) => date.format(new Date(value));
 
 export function StudentFinancialTab({ studentId }: { studentId: number }) {
+  const { user } = useAuth();
   const { data, error, loading, execute } = useApiRequest<ApiListResponse<Charge>, [number]>();
   const [selected, setSelected] = useState<Charge | null>(null);
   const [amount, setAmount] = useState('');
@@ -22,6 +24,9 @@ export function StudentFinancialTab({ studentId }: { studentId: number }) {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [refund, setRefund] = useState<{ charge: Charge; payment: Payment } | null>(null);
+  const [refundReason, setRefundReason] = useState('');
+  const canRefund = Boolean(user && ['OWNER', 'ADMIN', 'RECEPTION'].includes(user.role));
   const load = useCallback(() => execute(chargeService.getAll, studentId), [execute, studentId]);
 
   useEffect(() => { void load().catch(() => undefined); }, [load]);
@@ -47,6 +52,16 @@ export function StudentFinancialTab({ studentId }: { studentId: number }) {
     } catch (cause) { setSubmitError(cause instanceof Error ? cause.message : 'Não foi possível registrar o pagamento.'); }
     finally { setSubmitting(false); }
   };
+  const submitRefund = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!refund || submitting || !refundReason.trim()) return;
+    setSubmitting(true); setSubmitError(null);
+    try {
+      const result = await chargeService.refundPayment(refund.payment.id, { reason: refundReason.trim() });
+      setRefund(null); setRefundReason(''); setMessage(result.message); await load();
+    } catch (cause) { setSubmitError(cause instanceof Error ? cause.message : 'Não foi possível estornar o pagamento.'); }
+    finally { setSubmitting(false); }
+  };
 
   return <section id="panel-Financeiro" className="financial-panel" role="tabpanel" aria-labelledby="tab-Financeiro">
     <div className="financial-panel-heading"><div><p className="section-eyebrow">Visão financeira</p><h2>Resumo Financeiro</h2><p>Cobranças, saldos e pagamentos reais do aluno.</p></div></div>
@@ -54,8 +69,9 @@ export function StudentFinancialTab({ studentId }: { studentId: number }) {
     {loading && <div className="financial-state"><span className="loading-spinner" /><p>Carregando cobranças...</p></div>}
     {error && <div className="financial-state financial-state-error" role="alert"><strong>Não foi possível carregar as cobranças.</strong><p>{error.message}</p></div>}
     {!loading && !error && <><div className="financial-summary-grid">{summary.map((item) => <FinancialSummaryCard key={item.label} {...item} />)}</div><div className="financial-table-section"><div className="financial-table-heading"><h3>Cobranças e pagamentos</h3><span>{charges.length} lançamento(s)</span></div>
-      {charges.length === 0 ? <div className="financial-state"><strong>Nenhuma cobrança encontrada</strong></div> : <div className="financial-table-scroll"><table className="financial-table"><thead><tr><th>Descrição</th><th>Total</th><th>Pago</th><th>Saldo</th><th>Status</th><th>Pagamentos</th><th>Ação</th></tr></thead><tbody>{charges.map((charge) => <tr key={charge.id}><td><strong>{charge.description}</strong><small>{formatDate(charge.dueDate)}</small></td><td>{formatCurrency(charge.finalAmount)}</td><td>{formatCurrency(charge.totalPaid)}</td><td>{formatCurrency(charge.balance)}</td><td><FinancialStatusBadge status={charge.status} /></td><td>{charge.payments.length === 0 ? 'Sem pagamentos' : charge.payments.map((payment) => <div key={payment.id} className="payment-entry">{formatDate(payment.paidAt)} · {methods[payment.method]} · {formatCurrency(payment.amount)}{payment.reference ? ` · ${payment.reference}` : ''}</div>)}</td><td>{openStatuses.has(charge.status) && charge.balance > 0 ? <button className="secondary-action-button" type="button" onClick={() => openPayment(charge)}>Registrar pagamento</button> : '—'}</td></tr>)}</tbody></table></div>}
+      {charges.length === 0 ? <div className="financial-state"><strong>Nenhuma cobrança encontrada</strong></div> : <div className="financial-table-scroll"><table className="financial-table"><thead><tr><th>Descrição</th><th>Total</th><th>Pago</th><th>Saldo</th><th>Status</th><th>Pagamentos</th><th>Ação</th></tr></thead><tbody>{charges.map((charge) => <tr key={charge.id}><td><strong>{charge.description}</strong><small>{formatDate(charge.dueDate)}</small></td><td>{formatCurrency(charge.finalAmount)}</td><td>{formatCurrency(charge.totalPaid)}</td><td>{formatCurrency(charge.balance)}</td><td><FinancialStatusBadge status={charge.status} /></td><td>{charge.payments.length === 0 ? 'Sem pagamentos' : charge.payments.map((payment) => <div key={payment.id} className={`payment-entry${payment.refundedAt ? ' refunded' : ''}`}>{formatDate(payment.paidAt)} · {methods[payment.method]} · {formatCurrency(payment.amount)}{payment.reference ? ` · ${payment.reference}` : ''}{payment.refundedAt ? <><strong> · ESTORNADO</strong><small>{payment.refundReason}</small></> : canRefund ? <button type="button" className="payment-refund-button" onClick={() => { setRefund({ charge, payment }); setRefundReason(''); setSubmitError(null); }}>Estornar</button> : null}</div>)}</td><td>{openStatuses.has(charge.status) && charge.balance > 0 ? <button className="secondary-action-button" type="button" onClick={() => openPayment(charge)}>Registrar pagamento</button> : '—'}</td></tr>)}</tbody></table></div>}
     </div></>}
     {selected && <div className="payment-modal-backdrop" role="presentation"><form className="payment-modal" onSubmit={submit}><h3>Registrar pagamento</h3><p>Saldo atual: <strong>{formatCurrency(selected.balance)}</strong></p>{submitError && <div className="form-error" role="alert">{submitError}</div>}<label>Valor<input type="number" min="0.01" max={selected.balance} step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required /></label><label>Método<select value={method} onChange={(e) => setMethod(e.target.value as PaymentMethod)}>{Object.entries(methods).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label>Data<input type="date" value={paidAt} onChange={(e) => setPaidAt(e.target.value)} required /></label><label>Referência<input value={reference} onChange={(e) => setReference(e.target.value)} /></label><small>PIX registra somente um pagamento já realizado; não gera QR Code.</small><div className="payment-modal-actions"><button type="button" className="secondary-action-button" onClick={() => setSelected(null)} disabled={submitting}>Cancelar</button><button type="submit" className="primary-action-button" disabled={submitting}>{submitting ? 'Registrando...' : 'Confirmar pagamento'}</button></div></form></div>}
+    {refund && <div className="payment-modal-backdrop" role="presentation"><form className="payment-modal" onSubmit={submitRefund}><h3>Confirmar estorno</h3><p>Cobrança: <strong>{refund.charge.description}</strong></p><p>Valor: <strong>{formatCurrency(refund.payment.amount)}</strong> · Data: <strong>{formatDate(refund.payment.paidAt)}</strong></p>{submitError && <div className="form-error" role="alert">{submitError}</div>}<label>Motivo<textarea minLength={3} maxLength={500} value={refundReason} onChange={(event) => setRefundReason(event.target.value)} required /></label><small>O pagamento original será preservado e deixará de compor o saldo pago.</small><div className="payment-modal-actions"><button type="button" className="secondary-action-button" onClick={() => setRefund(null)} disabled={submitting}>Cancelar</button><button type="submit" className="primary-action-button" disabled={submitting || !refundReason.trim()}>{submitting ? 'Estornando...' : 'Confirmar estorno'}</button></div></form></div>}
   </section>;
 }

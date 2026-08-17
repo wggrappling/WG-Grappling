@@ -10,6 +10,7 @@ import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../../generated/prisma/enums';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { Audit } from '../audit/audit.decorator';
+import { RefundPaymentDto } from './dto/refund-payment.dto';
 
 @ApiTags('Charges')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -90,5 +91,20 @@ export class ChargeController {
   @ApiResponse({ status: 200, description: 'Cobrança removida com sucesso.' })
   remove(@Param('id') id: string) {
     return this.chargeService.remove(Number(id));
+  }
+}
+
+@ApiTags('Payments')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Controller('payments')
+export class PaymentController {
+  constructor(private readonly chargeService: ChargeService) {}
+
+  @Post(':id/refund')
+  @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION)
+  @ApiOperation({ summary: 'Estornar pagamento preservando o histórico financeiro' })
+  @ApiBody({ type: RefundPaymentDto })
+  refund(@Param('id') id: string, @Body() dto: RefundPaymentDto, @Request() req: any) {
+    return this.chargeService.refundPayment(Number(id), dto, req.user.id);
   }
 }

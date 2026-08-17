@@ -1,5 +1,5 @@
 import { ROLES_KEY } from './roles.decorator';
-import { ChargeController } from '../charge/charge.controller';
+import { ChargeController, PaymentController } from '../charge/charge.controller';
 import { DocumentsController } from '../documents/documents.controller';
 import { UsersController } from '../users/users.controller';
 import { UserRole } from '../../generated/prisma/enums';
@@ -10,6 +10,12 @@ describe('RBAC endpoint policy', () => {
   it('allows reception to register payments and denies teachers by omission', () => {
     const roles = rolesFor(ChargeController.prototype, 'registerPayment');
     expect(roles).toContain(UserRole.RECEPTION);
+    expect(roles).not.toContain(UserRole.TEACHER);
+  });
+
+  it('allows owner, admin and reception to refund and blocks teachers', () => {
+    const roles = rolesFor(PaymentController.prototype, 'refund');
+    expect(roles).toEqual([UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION]);
     expect(roles).not.toContain(UserRole.TEACHER);
   });
 

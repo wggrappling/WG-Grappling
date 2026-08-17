@@ -1397,6 +1397,13 @@ h1 {
   color: #283348;
 }
 
+.payment-entry { margin-bottom: 7px; }
+.payment-entry.refunded { color: #64748b; text-decoration: line-through; }
+.payment-entry.refunded strong { color: #b91c1c; text-decoration: none; }
+.payment-entry small { display: block; margin-top: 3px; color: #7a8498; text-decoration: none; }
+.payment-refund-button { margin-left: 8px; padding: 4px 7px; color: #b91c1c; background: #fff; border: 1px solid #fecaca; border-radius: 6px; cursor: pointer; font-size: .68rem; font-weight: 700; }
+.payment-modal textarea { min-height: 90px; resize: vertical; }
+
 .financial-table tbody tr:last-child td {
   border-bottom: 0;
 }
