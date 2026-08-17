@@ -13,6 +13,23 @@
 }
 
 .dashboard-page { min-height: 100vh; padding: 24px clamp(18px, 4vw, 56px) 56px; background: #f5f7f6; color: #17211b; }
+.reports-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; padding: 6px; border: 1px solid #dce4df; border-radius: 12px; background: #fff; }
+.reports-nav button { padding: 10px 16px; border: 0; border-radius: 8px; background: transparent; color: #526059; cursor: pointer; font-weight: 700; }
+.reports-nav button.active { background: #173f2b; color: #fff; }
+.reports-panel { overflow: hidden; border: 1px solid #dce4df; border-radius: 16px; background: #fff; }
+.reports-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; padding: 18px; border-bottom: 1px solid #edf1ee; }
+.reports-filters label { display: flex; min-width: 150px; flex: 1 1 150px; flex-direction: column; gap: 6px; color: #526059; font-size: .78rem; font-weight: 700; }
+.reports-filters input, .reports-filters select { min-height: 40px; padding: 8px 10px; border: 1px solid #ccd6d0; border-radius: 8px; background: #fff; }
+.reports-filters button, .reports-pagination button { min-height: 40px; padding: 8px 15px; border: 1px solid #173f2b; border-radius: 8px; background: #173f2b; color: #fff; cursor: pointer; font-weight: 700; }
+.reports-filters button[type="button"], .reports-pagination button { background: #fff; color: #173f2b; }
+.reports-filters button:disabled, .reports-pagination button:disabled { cursor: not-allowed; opacity: .45; }
+.reports-table-scroll { overflow-x: auto; }
+.reports-table-scroll table { width: 100%; border-collapse: collapse; }
+.reports-table-scroll th, .reports-table-scroll td { padding: 13px 16px; border-bottom: 1px solid #edf1ee; text-align: left; white-space: nowrap; }
+.reports-table-scroll th { color: #526059; background: #f8faf9; font-size: .76rem; text-transform: uppercase; }
+.reports-state { min-height: 220px; display: grid; place-content: center; justify-items: center; padding: 28px; color: #69756e; text-align: center; }
+.reports-error { color: #9f2525; }
+.reports-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 14px; padding: 15px 18px; }
 .dashboard-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin: 28px 0; }
 .dashboard-header h1 { margin: 4px 0; font-size: clamp(2rem, 4vw, 3.25rem); }
 .dashboard-header p { margin: 0; color: #64706a; }

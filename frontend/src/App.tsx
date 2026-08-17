@@ -10,12 +10,14 @@ import { AdminPlansPage } from './pages/AdminPlansPage';
 import { AdminModalitiesPage } from './pages/AdminModalitiesPage';
 import { AdminClassesPage } from './pages/AdminClassesPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { ReportsPage } from './pages/ReportsPage';
 
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN', 'RECEPTION']}><DashboardPage /></ProtectedRoute>} />
+      <Route path="/reports" element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN', 'RECEPTION']}><ReportsPage /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN']}><AdminHomePage /></ProtectedRoute>} />
       <Route path="/admin/plans" element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN']}><AdminPlansPage /></ProtectedRoute>} />
       <Route path="/admin/modalities" element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN']}><AdminModalitiesPage /></ProtectedRoute>} />

@@ -1,5 +1,5 @@
 export type PlanOption = { id: number; name: string; price: string | number; active: boolean };
-export type ModalityOption = { id: number; name: string; active: boolean };
+export type ModalityOption = { id: number; name: string; active: boolean; hasGraduation: boolean };
 export type ClassOption = { id: number; name: string; modalityId: number; active: boolean; capacity: number; teacher?: { active: boolean } };
 
 export type NewStudentEnrollment = {
