@@ -23,6 +23,7 @@ import { envValidationSchema } from './config/env.validation';
 import { GraduationModule } from './graduation/graduation.module';
 import { AuditModule } from './audit/audit.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     DocumentsModule,
     GraduationModule,
     AuditModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
