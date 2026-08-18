@@ -17,7 +17,7 @@ export const envValidationSchema = Joi.object({
   REDIS_URL: Joi.string().uri().optional().messages({
     'string.uri': 'REDIS_URL deve ser uma URL válida quando configurada.',
   }),
-  NODE_ENV: Joi.string().valid('development', 'production', 'test', 'local').default('development'),
+  NODE_ENV: Joi.string().valid('development', 'production', 'test', 'local').required(),
   DOCUMENT_STORAGE_PATH: Joi.string().min(1).when('NODE_ENV', {
     is: 'production',
     then: Joi.required(),

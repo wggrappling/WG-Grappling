@@ -1,6 +1,6 @@
 # Checklist de produção
 
-1. Configurar `DATABASE_URL`, `JWT_SECRET`, `PORT`, `NODE_ENV=production`, `CORS_ORIGIN`, `DOCUMENT_STORAGE_PATH`, `DOCUMENT_MAX_SIZE_MB` e `FINANCIAL_CYCLE_ENABLED`.
+1. Configurar `DATABASE_URL`, `JWT_SECRET`, `PORT`, `NODE_ENV=production`, `CORS_ORIGIN`, `DOCUMENT_STORAGE_PATH`, `DOCUMENT_MAX_SIZE_MB`, `FINANCIAL_CYCLE_ENABLED` e `VITE_API_BASE_URL`.
 2. Provisionar o PostgreSQL e restringir as credenciais ao ambiente de produção.
 3. Executar `npm.cmd run prisma:migrate:deploy` no backend.
 4. Criar o diretório persistente definido em `DOCUMENT_STORAGE_PATH` e conceder acesso somente ao usuário do processo.
@@ -12,3 +12,6 @@
 10. Confirmar que `GET /health` retorna HTTP 200; indisponibilidade do banco deve retornar HTTP 503 sem detalhes internos.
 11. Verificar os logs de inicialização e erros, sem credenciais, tokens ou dados sensíveis.
 12. Manter `FINANCIAL_CYCLE_ENABLED=false` até validar banco, migrations, horário, idempotência e execução manual controlada; habilitar explicitamente somente depois.
+13. Executar e verificar o backup do PostgreSQL e o backup separado de `DOCUMENT_STORAGE_PATH`, conforme `DATABASE_BACKUP_AND_RECOVERY.md`.
+14. Confirmar que o procedimento de restore foi testado em ambiente temporário e isolado, sem usar o banco de produção.
+15. Fazer a validação final: migrations aplicadas, builds concluídos, `GET /health` saudável, logs seguros e smoke E2E controlado com teardown confirmado.

@@ -53,6 +53,7 @@ describe('bootstrap configuration', () => {
       'DATABASE_URL',
       'JWT_SECRET',
       'PORT',
+      'NODE_ENV',
       'CORS_ORIGIN',
       'DOCUMENT_STORAGE_PATH',
       'DOCUMENT_MAX_SIZE_MB',
