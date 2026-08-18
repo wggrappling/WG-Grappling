@@ -24,11 +24,11 @@ describe('AuditService', () => {
       userId: 7,
       action: 'LOGIN_SUCCESS',
       entity: 'User',
-      metadata: { password: 'secret', passwordHash: 'hash', token: 'token', jwt: 'jwt', authorization: 'Bearer jwt', safe: 'ok', nested: { access_token: 'jwt', name: 'Ana' } },
+      metadata: { password: 'secret', passwordHash: 'hash', token: 'token', jwt: 'jwt', authorization: 'Bearer jwt', secret: 'value', databaseUrl: 'postgresql://private', connectionString: 'private', safe: 'ok', nested: { access_token: 'jwt', name: 'Ana' } },
     });
     const metadata = prisma.auditLog.create.mock.calls[0][0].data.metadata;
     expect(metadata).toEqual({ safe: 'ok', nested: { name: 'Ana' } });
-    expect(JSON.stringify(metadata)).not.toMatch(/secret|hash|token|jwt|Bearer/);
+    expect(JSON.stringify(metadata)).not.toMatch(/secret|hash|token|jwt|Bearer|postgresql|connectionString/i);
   });
 
   it('does not break the primary operation when logging fails', async () => {

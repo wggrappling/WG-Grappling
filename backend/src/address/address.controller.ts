@@ -16,6 +16,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../../generated/prisma/enums';
+import { Audit } from '../audit/audit.decorator';
 
 @ApiTags('Address')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -40,6 +41,7 @@ export class AddressController {
   }
 
   @Post()
+  @Audit({ action: 'CREATE', entity: 'Address' })
   @ApiOperation({ summary: 'Criar endereço' })
   @ApiBody({ type: CreateAddressDto })
   @ApiResponse({ status: 201, description: 'Endereço criado com sucesso.' })
@@ -48,6 +50,7 @@ export class AddressController {
   }
 
   @Patch(':id')
+  @Audit({ action: 'UPDATE', entity: 'Address', entityIdParam: 'id' })
   @ApiOperation({ summary: 'Atualizar endereço' })
   @ApiParam({ name: 'id', description: 'ID do endereço' })
   @ApiBody({ type: UpdateAddressDto })
@@ -57,6 +60,7 @@ export class AddressController {
   }
 
   @Delete(':id')
+  @Audit({ action: 'DELETE', entity: 'Address', entityIdParam: 'id' })
   @ApiOperation({ summary: 'Remover endereço' })
   @ApiParam({ name: 'id', description: 'ID do endereço' })
   @ApiResponse({ status: 200, description: 'Endereço removido com sucesso.' })

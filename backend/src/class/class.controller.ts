@@ -7,6 +7,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../../generated/prisma/enums';
+import { Audit } from '../audit/audit.decorator';
 
 @ApiTags('Class')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -42,6 +43,7 @@ export class ClassController {
   }
 
   @Post()
+  @Audit({ action: 'CREATE', entity: 'Class' })
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Criar nova turma' })
   @ApiBody({ type: CreateClassDto })
@@ -51,6 +53,7 @@ export class ClassController {
   }
 
   @Patch(':id')
+  @Audit({ action: 'UPDATE', entity: 'Class', entityIdParam: 'id' })
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Atualizar turma' })
   @ApiParam({ name: 'id', description: 'ID da turma' })
@@ -61,6 +64,7 @@ export class ClassController {
   }
 
   @Delete(':id')
+  @Audit({ action: 'DELETE', entity: 'Class', entityIdParam: 'id' })
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Remover turma' })
   @ApiParam({ name: 'id', description: 'ID da turma' })

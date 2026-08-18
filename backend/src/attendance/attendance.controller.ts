@@ -57,6 +57,7 @@ export class AttendanceController {
   }
 
   @Patch(':id')
+  @Audit({ action: 'UPDATE', entity: 'Attendance', entityIdParam: 'id' })
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Atualizar registro de presença' })
   @ApiParam({ name: 'id', description: 'ID do registro' })
@@ -67,6 +68,7 @@ export class AttendanceController {
   }
 
   @Delete(':id')
+  @Audit({ action: 'DELETE', entity: 'Attendance', entityIdParam: 'id' })
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Remover registro de presença' })
   @ApiParam({ name: 'id', description: 'ID do registro' })

@@ -48,8 +48,13 @@ export class DocumentsController {
     return this.documentsService.upload(Number(studentId), dto.type, file, req.user);
   }
 
-  @Post('documents') create(@Body() dto: CreateDocumentDto) { return this.documentsService.create(dto); }
-  @Patch('documents/:id') update(@Param('id') id: string, @Body() dto: UpdateDocumentDto) { return this.documentsService.update(Number(id), dto); }
+  @Post('documents')
+  @Audit({ action: 'CREATE', entity: 'Document' })
+  create(@Body() dto: CreateDocumentDto) { return this.documentsService.create(dto); }
+
+  @Patch('documents/:id')
+  @Audit({ action: 'UPDATE', entity: 'Document', entityIdParam: 'id' })
+  update(@Param('id') id: string, @Body() dto: UpdateDocumentDto) { return this.documentsService.update(Number(id), dto); }
 
   @Delete('documents/:id')
   @Audit({ action: 'DELETE', entity: 'Document', entityIdParam: 'id' })

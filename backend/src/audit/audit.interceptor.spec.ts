@@ -1,5 +1,7 @@
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import { UnauthorizedException } from '@nestjs/common';
 import { AuditInterceptor } from './audit.interceptor';
+import { AuthController } from '../auth/auth.controller';
 
 describe('AuditInterceptor', () => {
   it('logs a successful sensitive operation with actor and entity id', (done) => {
@@ -27,5 +29,41 @@ describe('AuditInterceptor', () => {
         done();
       },
     });
+  });
+
+  it('does not create a false audit entry when the operation fails', (done) => {
+    const reflector = { getAllAndOverride: jest.fn().mockReturnValue({ action: 'DELETE', entity: 'Plan', entityIdParam: 'id' }) };
+    const auditService = { record: jest.fn() };
+    const context = { getHandler: jest.fn(), getClass: jest.fn(), switchToHttp: () => ({ getRequest: () => ({ user: { id: 9 }, params: { id: '42' }, body: {} }) }) };
+    const interceptor = new AuditInterceptor(reflector as any, auditService as any);
+    interceptor.intercept(context as any, { handle: () => throwError(() => new Error('operation rolled back')) }).subscribe({
+      error: () => {
+        expect(auditService.record).not.toHaveBeenCalled();
+        done();
+      },
+    });
+  });
+
+  it('records a failed login without password and keeps the generic response', async () => {
+    const authService = { validateUser: jest.fn().mockResolvedValue(null) };
+    const auditService = { record: jest.fn().mockResolvedValue({ id: 1 }) };
+    const controller = new AuthController(authService as any, auditService as any);
+
+    await expect(controller.login({ email: 'User@Example.com', password: 'never-log-this' })).rejects.toEqual(
+      expect.objectContaining({ response: expect.objectContaining({ message: 'Credenciais inválidas' }) }),
+    );
+    expect(auditService.record).toHaveBeenCalledWith({
+      action: 'LOGIN_FAILED',
+      entity: 'User',
+      metadata: { identifier: 'user@example.com', reason: 'INVALID_CREDENTIALS' },
+    });
+    expect(JSON.stringify(auditService.record.mock.calls)).not.toContain('never-log-this');
+  });
+
+  it('does not let an audit storage failure change the failed-login response', async () => {
+    const authService = { validateUser: jest.fn().mockResolvedValue(null) };
+    const auditService = { record: jest.fn().mockResolvedValue(null) };
+    const controller = new AuthController(authService as any, auditService as any);
+    await expect(controller.login({ email: 'user@example.com', password: 'secret' })).rejects.toBeInstanceOf(UnauthorizedException);
   });
 });

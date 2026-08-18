@@ -7,6 +7,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../../generated/prisma/enums';
+import { Audit } from '../audit/audit.decorator';
 
 @ApiTags('Plans')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -32,6 +33,7 @@ export class PlansController {
   }
 
   @Post()
+  @Audit({ action: 'CREATE', entity: 'Plan' })
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Criar novo plano' })
   @ApiBody({ type: CreatePlanDto })
@@ -41,6 +43,7 @@ export class PlansController {
   }
 
   @Patch(':id')
+  @Audit({ action: 'UPDATE', entity: 'Plan', entityIdParam: 'id' })
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Atualizar plano' })
   @ApiParam({ name: 'id', description: 'ID do plano' })
@@ -51,6 +54,7 @@ export class PlansController {
   }
 
   @Delete(':id')
+  @Audit({ action: 'DELETE', entity: 'Plan', entityIdParam: 'id' })
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Remover plano' })
   @ApiParam({ name: 'id', description: 'ID do plano' })

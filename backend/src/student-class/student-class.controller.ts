@@ -6,6 +6,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../../generated/prisma/enums';
+import { Audit } from '../audit/audit.decorator';
 
 @ApiTags('StudentClass')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -15,6 +16,7 @@ export class StudentClassController {
   constructor(private readonly studentClassService: StudentClassService) {}
 
   @Post()
+  @Audit({ action: 'CREATE', entity: 'StudentClass' })
   @ApiOperation({ summary: 'Associar um aluno a uma turma' })
   @ApiBody({ type: CreateStudentClassDto })
   @ApiResponse({ status: 201, description: 'Associação criada com sucesso.' })
@@ -38,6 +40,7 @@ export class StudentClassController {
   }
 
   @Delete(':id')
+  @Audit({ action: 'DELETE', entity: 'StudentClass', entityIdParam: 'id' })
   @ApiOperation({ summary: 'Remover associação aluno-turma' })
   @ApiParam({ name: 'id', description: 'ID da associação' })
   @ApiResponse({ status: 200, description: 'Associação removida com sucesso.' })

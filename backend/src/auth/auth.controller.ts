@@ -4,11 +4,12 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { Audit } from '../audit/audit.decorator';
+import { AuditService } from '../audit/audit.service';
 
 @ApiTags('Autenticação')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService, private readonly auditService: AuditService) {}
 
   @Post('login')
   @Audit({ action: 'LOGIN_SUCCESS', entity: 'User' })
@@ -27,6 +28,11 @@ export class AuthController {
   async login(@Body() body: LoginDto) {
     const user = await this.authService.validateUser(body.email, body.password);
     if (!user) {
+      await this.auditService.record({
+        action: 'LOGIN_FAILED',
+        entity: 'User',
+        metadata: { identifier: body.email.trim().toLowerCase(), reason: 'INVALID_CREDENTIALS' },
+      });
       throw new UnauthorizedException('Credenciais inválidas');
     }
     return this.authService.login(user);

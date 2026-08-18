@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
-const forbiddenKeys = /(password|token|jwt|authorization)/i;
+const forbiddenKeys = /(password|token|jwt|authorization|secret|database.?url|connection.?string)/i;
 
 export function sanitizeAuditMetadata(value: unknown): Prisma.InputJsonValue | undefined {
   if (value === undefined || value === null) return undefined;

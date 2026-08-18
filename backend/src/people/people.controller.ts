@@ -15,6 +15,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../../generated/prisma/enums';
+import { Audit } from '../audit/audit.decorator';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION)
@@ -33,11 +34,13 @@ export class PeopleController {
   }
 
   @Post()
+  @Audit({ action: 'CREATE', entity: 'Person' })
   create(@Body() createPersonDto: CreatePersonDto) {
     return this.peopleService.create(createPersonDto);
   }
 
   @Patch(':id')
+  @Audit({ action: 'UPDATE', entity: 'Person', entityIdParam: 'id' })
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   update(
     @Param('id') id: string,
@@ -47,6 +50,7 @@ export class PeopleController {
   }
 
   @Delete(':id')
+  @Audit({ action: 'DELETE', entity: 'Person', entityIdParam: 'id' })
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   remove(@Param('id') id: string) {
     return this.peopleService.remove(Number(id));

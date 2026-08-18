@@ -3,6 +3,13 @@ import { ChargeController, PaymentController } from '../charge/charge.controller
 import { DocumentsController } from '../documents/documents.controller';
 import { UsersController } from '../users/users.controller';
 import { UserRole } from '../../generated/prisma/enums';
+import { AUDIT_KEY } from '../audit/audit.decorator';
+import { StudentsController } from '../students/students.controller';
+import { PlansController } from '../plans/plans.controller';
+import { ModalityController } from '../modality/modality.controller';
+import { ClassController } from '../class/class.controller';
+import { AttendanceController } from '../attendance/attendance.controller';
+import { GraduationController } from '../graduation/graduation.controller';
 
 describe('RBAC endpoint policy', () => {
   const rolesFor = (target: object, method?: string) => Reflect.getMetadata(ROLES_KEY, method ? (target as any)[method] : target);
@@ -27,5 +34,46 @@ describe('RBAC endpoint policy', () => {
 
   it('restricts all user administration to owner and admin', () => {
     expect(rolesFor(UsersController)).toEqual([UserRole.OWNER, UserRole.ADMIN]);
+  });
+
+  it.each([
+    [StudentsController, 'create', 'CREATE', 'Student'],
+    [StudentsController, 'update', 'UPDATE', 'Student'],
+    [StudentsController, 'remove', 'DELETE', 'Student'],
+    [PlansController, 'create', 'CREATE', 'Plan'],
+    [PlansController, 'update', 'UPDATE', 'Plan'],
+    [PlansController, 'remove', 'DELETE', 'Plan'],
+    [ModalityController, 'create', 'CREATE', 'Modality'],
+    [ModalityController, 'update', 'UPDATE', 'Modality'],
+    [ModalityController, 'remove', 'DELETE', 'Modality'],
+    [ClassController, 'create', 'CREATE', 'Class'],
+    [ClassController, 'update', 'UPDATE', 'Class'],
+    [ClassController, 'remove', 'DELETE', 'Class'],
+    [AttendanceController, 'create', 'REGISTER', 'Attendance'],
+    [AttendanceController, 'createBatch', 'REGISTER_BATCH', 'Attendance'],
+    [AttendanceController, 'update', 'UPDATE', 'Attendance'],
+    [AttendanceController, 'remove', 'DELETE', 'Attendance'],
+    [DocumentsController, 'upload', 'UPLOAD', 'Document'],
+    [DocumentsController, 'create', 'CREATE', 'Document'],
+    [DocumentsController, 'update', 'UPDATE', 'Document'],
+    [DocumentsController, 'remove', 'DELETE', 'Document'],
+    [GraduationController, 'create', 'CREATE', 'Graduation'],
+    [GraduationController, 'update', 'UPDATE', 'Graduation'],
+    [ChargeController, 'create', 'CREATE', 'Charge'],
+    [ChargeController, 'update', 'UPDATE', 'Charge'],
+    [ChargeController, 'remove', 'CANCEL', 'Charge'],
+  ])('audits %s.%s as %s/%s', (controller, method, action, entity) => {
+    expect(Reflect.getMetadata(AUDIT_KEY, (controller as any).prototype[method as string])).toEqual(expect.objectContaining({ action, entity }));
+  });
+
+  it('keeps reception and teacher permissions unchanged on administrative catalogs', () => {
+    for (const controller of [PlansController, ModalityController, ClassController]) {
+      for (const method of ['create', 'update', 'remove']) {
+        const roles = rolesFor(controller.prototype, method);
+        expect(roles).toEqual([UserRole.OWNER, UserRole.ADMIN]);
+        expect(roles).not.toContain(UserRole.RECEPTION);
+        expect(roles).not.toContain(UserRole.TEACHER);
+      }
+    }
   });
 });

@@ -7,6 +7,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../../generated/prisma/enums';
+import { Audit } from '../audit/audit.decorator';
 
 @ApiTags('Modality')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -32,6 +33,7 @@ export class ModalityController {
   }
 
   @Post()
+  @Audit({ action: 'CREATE', entity: 'Modality' })
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Criar nova modalidade' })
   @ApiBody({ type: CreateModalityDto })
@@ -41,6 +43,7 @@ export class ModalityController {
   }
 
   @Patch(':id')
+  @Audit({ action: 'UPDATE', entity: 'Modality', entityIdParam: 'id' })
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Atualizar modalidade' })
   @ApiParam({ name: 'id', description: 'ID da modalidade' })
@@ -51,6 +54,7 @@ export class ModalityController {
   }
 
   @Delete(':id')
+  @Audit({ action: 'DELETE', entity: 'Modality', entityIdParam: 'id' })
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Remover modalidade' })
   @ApiParam({ name: 'id', description: 'ID da modalidade' })

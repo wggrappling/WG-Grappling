@@ -59,6 +59,7 @@ export class StudentsController {
   }
 
   @Delete(':id')
+  @Audit({ action: 'DELETE', entity: 'Student', entityIdParam: 'id' })
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   @ApiOperation({ summary: 'Remover estudante' })
   @ApiParam({ name: 'id', description: 'ID do estudante' })

@@ -16,6 +16,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../../generated/prisma/enums';
+import { Audit } from '../audit/audit.decorator';
 
 @ApiTags('Responsible')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -40,6 +41,7 @@ export class ResponsibleController {
   }
 
   @Post()
+  @Audit({ action: 'CREATE', entity: 'Responsible' })
   @ApiOperation({ summary: 'Criar responsável' })
   @ApiBody({ type: CreateResponsibleDto })
   @ApiResponse({ status: 201, description: 'Responsável criado com sucesso.' })
@@ -48,6 +50,7 @@ export class ResponsibleController {
   }
 
   @Patch(':id')
+  @Audit({ action: 'UPDATE', entity: 'Responsible', entityIdParam: 'id' })
   @ApiOperation({ summary: 'Atualizar responsável' })
   @ApiParam({ name: 'id', description: 'ID do responsável' })
   @ApiBody({ type: UpdateResponsibleDto })
@@ -57,6 +60,7 @@ export class ResponsibleController {
   }
 
   @Delete(':id')
+  @Audit({ action: 'DELETE', entity: 'Responsible', entityIdParam: 'id' })
   @ApiOperation({ summary: 'Remover responsável' })
   @ApiParam({ name: 'id', description: 'ID do responsável' })
   @ApiResponse({ status: 200, description: 'Responsável removido com sucesso.' })

@@ -4,7 +4,7 @@ import { Observable, tap } from 'rxjs';
 import { AUDIT_KEY, AuditDefinition } from './audit.decorator';
 import { AuditService } from './audit.service';
 
-const secretKey = /(password|token|jwt|authorization)/i;
+const secretKey = /(password|token|jwt|authorization|secret|database.?url|connection.?string)/i;
 const detailKeys = new Set(['status', 'type', 'method', 'belt', 'planId', 'modalityId', 'classId', 'studentId', 'amount', 'paidAt', 'attendanceDate']);
 
 function auditMetadata(body: Record<string, unknown> | undefined) {

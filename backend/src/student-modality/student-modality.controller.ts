@@ -7,6 +7,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../../generated/prisma/enums';
+import { Audit } from '../audit/audit.decorator';
 
 @ApiTags('StudentModality')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -31,6 +32,7 @@ export class StudentModalityController {
   }
 
   @Post()
+  @Audit({ action: 'CREATE', entity: 'StudentModality' })
   @ApiOperation({ summary: 'Criar nova associação estudante-modalidade' })
   @ApiBody({ type: CreateStudentModalityDto })
   @ApiResponse({ status: 201, description: 'Associação criada com sucesso.' })
@@ -39,6 +41,7 @@ export class StudentModalityController {
   }
 
   @Patch(':id')
+  @Audit({ action: 'UPDATE', entity: 'StudentModality', entityIdParam: 'id' })
   @ApiOperation({ summary: 'Atualizar associação estudante-modalidade' })
   @ApiParam({ name: 'id', description: 'ID da associação' })
   @ApiBody({ type: UpdateStudentModalityDto })
@@ -48,6 +51,7 @@ export class StudentModalityController {
   }
 
   @Delete(':id')
+  @Audit({ action: 'DELETE', entity: 'StudentModality', entityIdParam: 'id' })
   @ApiOperation({ summary: 'Remover associação estudante-modalidade' })
   @ApiParam({ name: 'id', description: 'ID da associação' })
   @ApiResponse({ status: 200, description: 'Associação removida com sucesso.' })
