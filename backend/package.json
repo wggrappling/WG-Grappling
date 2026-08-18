@@ -16,6 +16,8 @@
     "prisma:migrate:status": "prisma migrate status",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
+    "db:backup": "node scripts/db-backup.js",
+    "test:db-backup": "node --test scripts/db-backup.test.js",
     "financial:cycle": "ts-node scripts/financial-cycle.ts",
     "test": "jest",
     "test:watch": "jest --watch",

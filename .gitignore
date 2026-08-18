@@ -31,3 +31,7 @@ backend/.windsurf/
 # Uploaded runtime documents
 /storage/
 /backend/storage/
+
+# Database backups must remain outside version control
+/backups/
+/backend/backups/
