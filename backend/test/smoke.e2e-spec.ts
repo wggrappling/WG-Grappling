@@ -2,7 +2,6 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import * as bcrypt from 'bcrypt';
 import request from 'supertest';
-import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { LocalStorageAdapter } from '../src/documents/storage/local-storage.adapter';
 import { UserRole } from '../generated/prisma/enums';
@@ -116,6 +115,7 @@ describe('SMOKE TEST operacional (e2e)', () => {
     }
 
     runStartedAt = new Date();
+    const { AppModule } = await import('../src/app.module');
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
