@@ -25,7 +25,7 @@ async function bootstrap() {
   configureSwagger(app, nodeEnv);
 
   const listenPort = port ?? 3000;
-  await app.listen(listenPort);
+  await app.listen(listenPort, '0.0.0.0');
   logStartup(logger, nodeEnv, listenPort);
 }
 
