@@ -32,8 +32,12 @@ describe('AuditService', () => {
   });
 
   it('does not break the primary operation when logging fails', async () => {
-    prisma.auditLog.create.mockRejectedValue(new Error('database unavailable'));
+    const warn = jest.fn();
+    (service as any).logger.warn = warn;
+    prisma.auditLog.create.mockRejectedValue(new Error('postgresql://admin:secret@database.example/wg'));
     await expect(service.record({ userId: 1, action: 'CREATE', entity: 'Student' })).resolves.toBeNull();
+    expect(warn).toHaveBeenCalledWith('Falha ao registrar auditoria.');
+    expect(JSON.stringify(warn.mock.calls)).not.toMatch(/postgresql|admin|secret|database\.example/);
   });
 
   it('queries audit logs with pagination and filters', async () => {

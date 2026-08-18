@@ -2,6 +2,7 @@ import { ExecutionContext, ForbiddenException, UnauthorizedException } from '@ne
 import { Reflector } from '@nestjs/core';
 import { RolesGuard } from './roles.guard';
 import { UserRole } from '../users/dto/create-user.dto';
+import { JwtStrategy } from './jwt.strategy';
 
 describe('RolesGuard', () => {
   let guard: RolesGuard;
@@ -47,5 +48,16 @@ describe('RolesGuard', () => {
     } as ExecutionContext;
     reflector.get = jest.fn().mockReturnValue([UserRole.ADMIN]);
     expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
+  });
+
+  it('requires the validated JWT secret when creating the JWT strategy', () => {
+    const config = { getOrThrow: jest.fn(() => { throw new Error('JWT_SECRET missing'); }) };
+    expect(() => new JwtStrategy({} as any, config as any)).toThrow('JWT_SECRET missing');
+    expect(config.getOrThrow).toHaveBeenCalledWith('JWT_SECRET');
+  });
+
+  it('keeps JWT expiration validation enabled', () => {
+    const strategy = new JwtStrategy({} as any, { getOrThrow: () => '12345678901234567890123456789012' } as any);
+    expect((strategy as any)._verifOpts.ignoreExpiration).toBe(false);
   });
 });

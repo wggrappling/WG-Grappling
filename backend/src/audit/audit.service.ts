@@ -39,8 +39,8 @@ export class AuditService {
           metadata: sanitizeAuditMetadata(input.metadata),
         },
       });
-    } catch (error) {
-      this.logger.warn(`Falha ao registrar auditoria: ${error instanceof Error ? error.message : 'erro desconhecido'}`);
+    } catch {
+      this.logger.warn('Falha ao registrar auditoria.');
       return null;
     }
   }
