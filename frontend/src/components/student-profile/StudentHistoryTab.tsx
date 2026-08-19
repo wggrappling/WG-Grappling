@@ -1,2 +1,91 @@
-import{useEffect,useState}from'react';import{historyService}from'../../services';import type{HistoryEventType,StudentHistoryEvent}from'../../types';const labels:Record<HistoryEventType,string>={ENROLLMENT:'Matrícula',GRADUATION:'Graduação',ATTENDANCE:'Presença',DOCUMENT:'Documento',CHARGE:'Cobrança',PAYMENT:'Pagamento',PAYMENT_REFUNDED:'Estorno',ENROLLMENT_CHANGE:'Plano'};
-export function StudentHistoryTab({studentId}:{studentId:number}){const[events,setEvents]=useState<StudentHistoryEvent[]>([]);const[filter,setFilter]=useState<HistoryEventType|''>('');const[loading,setLoading]=useState(true);const[error,setError]=useState('');useEffect(()=>{historyService.history(studentId).then(setEvents).catch(e=>setError(e instanceof Error?e.message:'Erro ao carregar histórico.')).finally(()=>setLoading(false));},[studentId]);const visible=filter?events.filter(e=>e.type===filter):events;return <section className="history-panel"><div className="history-panel-heading"><div><p className="section-eyebrow">Linha do tempo</p><h2>Histórico real</h2></div><span className="history-event-count">{visible.length} eventos</span></div><div className="history-filters"><button className={!filter?'history-filter active':'history-filter'} onClick={()=>setFilter('')}>Todos</button>{Object.entries(labels).map(([k,v])=><button key={k} className={filter===k?'history-filter active':'history-filter'} onClick={()=>setFilter(k as HistoryEventType)}>{v}</button>)}</div>{loading?<div className="documents-state">Carregando...</div>:error?<div className="documents-state documents-state-error">{error}</div>:visible.length===0?<div className="documents-state">Nenhum evento real encontrado.</div>:<div className="history-timeline">{visible.map(e=><article className="timeline-event" key={e.id}><div className="timeline-date"><strong>{new Date(e.date).toLocaleDateString('pt-BR')}</strong></div><div className="timeline-marker-column"><span className="timeline-icon enrollment">•</span></div><div className="timeline-content"><span className="timeline-type enrollment">{labels[e.type]}</span><p>{e.description}</p><small>Responsável: <strong>{e.actor??'Não registrado'}</strong></small></div></article>)}</div>}</section>}
+import { useEffect, useState } from 'react';
+import { historyService } from '../../services';
+import type { HistoryEventType, StudentHistoryEvent } from '../../types';
+import { presentStatusText } from '../../utils/status-labels';
+const labels: Record<HistoryEventType, string> = {
+  ENROLLMENT: 'Matrícula',
+  GRADUATION: 'Graduação',
+  ATTENDANCE: 'Presença',
+  DOCUMENT: 'Documento',
+  CHARGE: 'Cobrança',
+  PAYMENT: 'Pagamento',
+  PAYMENT_REFUNDED: 'Estorno',
+  ENROLLMENT_CHANGE: 'Plano',
+};
+export function StudentHistoryTab({ studentId }: { studentId: number }) {
+  const [events, setEvents] = useState<StudentHistoryEvent[]>([]);
+  const [filter, setFilter] = useState<HistoryEventType | ''>('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    historyService
+      .history(studentId)
+      .then(setEvents)
+      .catch((e) =>
+        setError(
+          e instanceof Error ? e.message : 'Erro ao carregar histórico.',
+        ),
+      )
+      .finally(() => setLoading(false));
+  }, [studentId]);
+  const visible = filter ? events.filter((e) => e.type === filter) : events;
+  return (
+    <section className="history-panel">
+      <div className="history-panel-heading">
+        <div>
+          <p className="section-eyebrow">Linha do tempo</p>
+          <h2>Histórico real</h2>
+        </div>
+        <span className="history-event-count">{visible.length} eventos</span>
+      </div>
+      <div className="history-filters">
+        <button
+          className={!filter ? 'history-filter active' : 'history-filter'}
+          onClick={() => setFilter('')}
+        >
+          Todos
+        </button>
+        {Object.entries(labels).map(([k, v]) => (
+          <button
+            key={k}
+            className={
+              filter === k ? 'history-filter active' : 'history-filter'
+            }
+            onClick={() => setFilter(k as HistoryEventType)}
+          >
+            {v}
+          </button>
+        ))}
+      </div>
+      {loading ? (
+        <div className="documents-state">Carregando...</div>
+      ) : error ? (
+        <div className="documents-state documents-state-error">{error}</div>
+      ) : visible.length === 0 ? (
+        <div className="documents-state">Nenhum evento real encontrado.</div>
+      ) : (
+        <div className="history-timeline">
+          {visible.map((e) => (
+            <article className="timeline-event" key={e.id}>
+              <div className="timeline-date">
+                <strong>{new Date(e.date).toLocaleDateString('pt-BR')}</strong>
+              </div>
+              <div className="timeline-marker-column">
+                <span className="timeline-icon enrollment">•</span>
+              </div>
+              <div className="timeline-content">
+                <span className="timeline-type enrollment">
+                  {labels[e.type]}
+                </span>
+                <p>{presentStatusText(e.description)}</p>
+                <small>
+                  Responsável: <strong>{e.actor ?? 'Não registrado'}</strong>
+                </small>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}

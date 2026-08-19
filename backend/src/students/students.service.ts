@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
@@ -80,10 +80,15 @@ export class StudentsService {
             },
           },
         },
+        graduations: {
+          include: { modality: true, actor: { select: { id: true, name: true } } },
+          orderBy: [{ modalityId: 'asc' }, { graduatedAt: 'desc' }],
+        },
       },
     });
     if (!student && user?.role === UserRole.TEACHER) throw new ForbiddenException('Professor sem acesso a este aluno.');
     if (!student) return null;
+    if (user?.role === UserRole.TEACHER) return { ...student, plans: [] };
     return student;
   }
 
@@ -95,22 +100,37 @@ export class StudentsService {
   }
 
   async history(id: number, user?: UserContext) {
-    const student = await this.findOne(id, user); if (!student) throw new Error('Aluno não encontrado.');
+    const student = await this.findOne(id, user);
+    if (!student) throw new NotFoundException('Aluno não encontrado.');
+    const canAccessSensitiveHistory = user?.role !== UserRole.TEACHER;
     const [graduations, attendances, documents, charges, plans] = await Promise.all([
       this.prisma.graduation.findMany({ where: { studentId: id }, include: { modality: { select: { name: true } }, actor: { select: { name: true } } } }),
       this.prisma.attendance.findMany({ where: { studentId: id }, include: { class: { select: { name: true } } } }),
-      this.prisma.document.findMany({ where: { studentId: id, status: { not: 'DELETED' } }, include: { uploader: { select: { name: true } } } }),
+      this.prisma.document.findMany({ where: { studentId: id }, include: { uploader: { select: { name: true } } } }),
       this.prisma.charge.findMany({
         where: { studentId: id },
         include: { payments: { include: { refundedByUser: { select: { name: true } } } } },
       }),
       this.prisma.studentPlan.findMany({ where: { studentId: id }, include: { plan: { select: { name: true } } } }),
     ]);
+    const relatedAuditTargets = [
+      { entity: 'Student', ids: [id] },
+      { entity: 'Enrollment', ids: [id] },
+      { entity: 'Document', ids: documents.map((item) => item.id) },
+      { entity: 'Graduation', ids: graduations.map((item) => item.id) },
+      { entity: 'Attendance', ids: attendances.map((item) => item.id) },
+      { entity: 'StudentPlan', ids: plans.map((item) => item.id) },
+    ];
+    const auditLogs = await this.prisma.auditLog.findMany({
+      where: { OR: relatedAuditTargets.filter((target) => target.ids.length).map((target) => ({ entity: target.entity, entityId: { in: target.ids.map(String) } })) },
+      include: { user: { select: { name: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
     const events:any[]=[{id:`enrollment-${id}`,type:'ENROLLMENT',date:student.joinedAt,description:'Matrícula do aluno registrada.',actor:null,reference:{entity:'Student',id}}];
     graduations.forEach(g=>events.push({id:`graduation-${g.id}`,type:'GRADUATION',date:g.graduatedAt,description:`Graduação ${g.belt} registrada em ${g.modality.name}.`,actor:g.actor?.name??null,reference:{entity:'Graduation',id:g.id}}));
     attendances.forEach(a=>events.push({id:`attendance-${a.id}`,type:'ATTENDANCE',date:a.attendanceDate,description:`Presença ${a.status} em ${a.class.name}.`,actor:null,reference:{entity:'Attendance',id:a.id}}));
-    documents.forEach(d=>events.push({id:`document-${d.id}`,type:'DOCUMENT',date:d.createdAt,description:`Documento ${d.originalName} registrado.`,actor:d.uploader?.name??null,reference:{entity:'Document',id:d.id}}));
-    charges.forEach(c=>{
+    if (canAccessSensitiveHistory) documents.filter((document) => document.status !== 'DELETED').forEach(d=>events.push({id:`document-${d.id}`,type:'DOCUMENT',date:d.createdAt,description:`Documento ${d.originalName} registrado.`,actor:d.uploader?.name??null,reference:{entity:'Document',id:d.id}}));
+    if (canAccessSensitiveHistory) charges.forEach(c=>{
       events.push({id:`charge-${c.id}`,type:'CHARGE',date:c.createdAt,description:`Cobrança: ${c.description} (${c.status}).`,actor:null,reference:{entity:'Charge',id:c.id}});
       c.payments.forEach(p=>{
         if (p.refundedAt) {
@@ -121,7 +141,24 @@ export class StudentsService {
         events.push({id:`payment-${p.id}`,type:'PAYMENT',date:p.paidAt,description:`Pagamento registrado (${p.method}).`,actor:null,reference:{entity:'Payment',id:p.id}});
       });
     });
-    plans.forEach(p=>events.push({id:`plan-${p.id}`,type:'ENROLLMENT_CHANGE',date:p.createdAt,description:`Plano ${p.plan.name} vinculado (${p.status}).`,actor:null,reference:{entity:'StudentPlan',id:p.id}}));
+    if (canAccessSensitiveHistory) plans.forEach(p=>events.push({id:`plan-${p.id}`,type:'ENROLLMENT_CHANGE',date:p.createdAt,description:`Plano ${p.plan.name} vinculado (${p.status}).`,actor:null,reference:{entity:'StudentPlan',id:p.id}}));
+    const auditDescriptions: Record<string, { type: string; description: string; sensitive?: boolean }> = {
+      'Student:UPDATE': { type: 'ENROLLMENT_CHANGE', description: 'Dados do aluno atualizados.' },
+      'Enrollment:UPDATE': { type: 'ENROLLMENT_CHANGE', description: 'Matrícula do aluno atualizada.' },
+      'Document:DELETE': { type: 'DOCUMENT', description: 'Documento removido.', sensitive: true },
+      'Graduation:UPDATE': { type: 'GRADUATION', description: 'Graduação atualizada.' },
+      'Attendance:UPDATE': { type: 'ATTENDANCE', description: 'Presença atualizada.' },
+      'Attendance:DELETE': { type: 'ATTENDANCE', description: 'Presença removida.' },
+      'StudentPlan:STUDENT_PLAN_CREATED': { type: 'ENROLLMENT_CHANGE', description: 'Plano do aluno criado.', sensitive: true },
+      'StudentPlan:STUDENT_PLAN_CHANGED': { type: 'ENROLLMENT_CHANGE', description: 'Plano do aluno alterado.', sensitive: true },
+      'StudentPlan:STUDENT_PLAN_TERMS_UPDATED': { type: 'ENROLLMENT_CHANGE', description: 'Condições do plano atualizadas.', sensitive: true },
+      'StudentPlan:STUDENT_PLAN_ENDED': { type: 'ENROLLMENT_CHANGE', description: 'Plano do aluno encerrado.', sensitive: true },
+    };
+    auditLogs.forEach((log) => {
+      const presentation = auditDescriptions[`${log.entity}:${log.action}`];
+      if (!presentation || (presentation.sensitive && !canAccessSensitiveHistory)) return;
+      events.push({ id: `audit-${log.id}`, type: presentation.type, date: log.createdAt, description: presentation.description, actor: log.user?.name ?? null, reference: { entity: log.entity, id: log.entityId } });
+    });
     return events.sort((a,b)=>new Date(b.date).getTime()-new Date(a.date).getTime());
   }
 

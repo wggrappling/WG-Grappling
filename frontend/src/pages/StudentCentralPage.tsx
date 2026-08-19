@@ -5,13 +5,8 @@ import { EditStudentPanel } from '../components/student-profile/EditStudentPanel
 import { StudentTabs, studentTabs, type StudentTab } from '../components/student-profile/StudentTabs';
 import { useApiRequest, useAuth } from '../hooks';
 import { studentService } from '../services';
-import type { Student, StudentStatus } from '../types';
-
-const statusLabels: Record<StudentStatus, string> = {
-  ACTIVE: 'Ativo',
-  PAUSED: 'Pausado',
-  INACTIVE: 'Inativo',
-};
+import type { Student } from '../types';
+import { statusLabel } from '../utils/status-labels';
 
 export function StudentCentralPage() {
   const [activeTab, setActiveTab] = useState<StudentTab>(studentTabs[0]);
@@ -57,6 +52,11 @@ export function StudentCentralPage() {
     );
   }
 
+  const currentGraduations = student.modalities?.filter((item) => item.status === 'ACTIVE').map(({ modality }) => {
+    const graduation = student.graduations?.find((item) => item.modalityId === modality.id);
+    return graduation ? `${modality.name}: ${statusLabel(graduation.belt)}` : `${modality.name}: sem graduação`;
+  }) ?? [];
+
   return (
     <main className="student-profile-page">
       <div className="session-bar">
@@ -74,13 +74,13 @@ export function StudentCentralPage() {
           <p className="eyebrow">Ficha do aluno</p>
           <div className="student-title-row">
             <h1 id="student-name">{student.person.name}</h1>
-            <span className="status-badge">{statusLabels[student.status]}</span>
+            <span className="status-badge">{statusLabel(student.status)}</span>
             {user?.role !== 'TEACHER' && <button type="button" className="student-edit-button" onClick={() => setEditing(true)}>Editar aluno</button>}
           </div>
 
           <dl className="student-metadata">
             <div><dt>Matrícula</dt><dd>{student.enrollmentNumber}</dd></div>
-            <div><dt>Faixa</dt><dd>Não disponível</dd></div>
+            <div><dt>Faixa</dt><dd>{currentGraduations.join(' · ') || 'Não informada'}</dd></div>
             <div><dt>Modalidades</dt><dd>{student.modalities?.filter(({ status }) => status === 'ACTIVE').map(({ modality }) => modality.name).join(', ') || 'Não disponível'}</dd></div>
           </dl>
         </div>

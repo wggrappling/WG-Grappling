@@ -1,15 +1,19 @@
 import type { ProfileSection } from '../../types/profile';
 import type { Student } from '../../types';
 import { ProfileInfoCard } from './ProfileInfoCard';
+import { statusLabel } from '../../utils/status-labels';
 
 type Props = { student: Student };
-const statusLabels = { ACTIVE: 'Ativo', PAUSED: 'Pausado', INACTIVE: 'Inativo' } as const;
 const formatDate = (date: string) => new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(new Date(date));
 const missing = 'Não disponível na API';
 
 export function StudentProfileTab({ student }: Props) {
   const address = student.person.address;
   const responsible = student.responsibles?.[0]?.responsible;
+  const currentGraduations = student.modalities?.filter((item) => item.status === 'ACTIVE').map(({ modality }) => {
+    const graduation = student.graduations?.find((item) => item.modalityId === modality.id);
+    return graduation ? `${modality.name}: ${statusLabel(graduation.belt)}` : `${modality.name}: sem graduação`;
+  }) ?? [];
   const sections: readonly ProfileSection[] = [
     { title: 'Dados Pessoais', fields: [
       { label: 'Nome', value: student.person.name }, { label: 'Matrícula', value: student.enrollmentNumber },
@@ -17,12 +21,12 @@ export function StudentProfileTab({ student }: Props) {
       { label: 'E-mail', value: student.person.email }, { label: 'Data de nascimento', value: missing }, { label: 'Sexo', value: missing },
     ] },
     { title: 'Informações da Academia', fields: [
-      { label: 'Status', value: statusLabels[student.status], badge: true }, { label: 'Data de matrícula', value: formatDate(student.joinedAt) },
+      { label: 'Status', value: statusLabel(student.status), badge: true }, { label: 'Data de matrícula', value: formatDate(student.joinedAt) },
       { label: 'Plano', value: student.plans?.map(({ plan }) => plan.name).join(', ') || 'Não informado' },
       { label: 'Modalidades', value: student.modalities?.filter(({ status }) => status === 'ACTIVE').map(({ modality }) => modality.name).join(', ') || 'Não informado' },
       { label: 'Turmas', value: student.studentClasses?.map(({ class: item }) => item.name).join(', ') || 'Não informado' },
       { label: 'Professor', value: [...new Set(student.studentClasses?.map(({ class: item }) => item.teacher.name) ?? [])].join(', ') || 'Não informado' },
-      { label: 'Faixa atual', value: missing },
+      { label: 'Faixa atual', value: currentGraduations.length ? currentGraduations : 'Não informado' },
     ] },
     { title: 'Endereço', fields: address ? [
       { label: 'CEP', value: address.zipCode }, { label: 'Logradouro', value: address.street }, { label: 'Número', value: address.number ?? 'Sem número' },

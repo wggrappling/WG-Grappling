@@ -1,5 +1,5 @@
 import { StudentModalityStatus, StudentPlanStatus, UserRole } from '../../generated/prisma/enums';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { StudentsService } from './students.service';
 
@@ -74,6 +74,10 @@ describe('StudentsService', () => {
               },
             },
           },
+          graduations: {
+            include: { modality: true, actor: { select: { id: true, name: true } } },
+            orderBy: [{ modalityId: 'asc' }, { graduatedAt: 'desc' }],
+          },
         },
       });
     });
@@ -89,9 +93,9 @@ describe('StudentsService', () => {
     });
 
     it('allows a teacher to access a student from their classes', async () => {
-      const findFirst = jest.fn().mockResolvedValue({ id: 7 });
+      const findFirst = jest.fn().mockResolvedValue({ id: 7, plans: [{ id: 11 }] });
       const service = new StudentsService({ student: { findFirst } } as unknown as PrismaService);
-      await expect(service.findOne(7, { id: 4, role: UserRole.TEACHER })).resolves.toEqual({ id: 7 });
+      await expect(service.findOne(7, { id: 4, role: UserRole.TEACHER })).resolves.toEqual({ id: 7, plans: [] });
       expect(findFirst.mock.calls[0][0].where).toEqual({ id: 7, studentClasses: { some: { class: { teacherUserId: 4 } } } });
     });
 
@@ -109,6 +113,7 @@ describe('StudentsService', () => {
       document: { findMany: jest.fn().mockResolvedValue([]) },
       charge: { findMany: jest.fn().mockResolvedValue([{ id: 20, description: 'Mensalidade', status: 'PARTIALLY_PAID', createdAt: new Date('2026-01-02T00:00:00Z'), payments }]) },
       studentPlan: { findMany: jest.fn().mockResolvedValue([]) },
+      auditLog: { findMany: jest.fn().mockResolvedValue([]) },
     }) as unknown as PrismaService;
 
     it('preserves normal and older payment events', async () => {
@@ -136,6 +141,43 @@ describe('StudentsService', () => {
       expect(paymentEvents[0].description).toContain('R$ 50.00');
       expect(paymentEvents[0].description).toContain('Mensalidade');
       expect(paymentEvents[0].description).toContain('Duplicidade');
+    });
+
+    it('does not expose financial or document history to teachers', async () => {
+      const prisma = historyPrisma([]) as any;
+      prisma.student.findFirst.mockResolvedValue({ id: 7, joinedAt: new Date('2026-01-01T00:00:00Z'), plans: [] });
+      prisma.auditLog.findMany.mockResolvedValue([
+        { id: 92, entity: 'StudentPlan', action: 'STUDENT_PLAN_CHANGED', entityId: '12', createdAt: new Date('2026-01-07'), user: { name: 'Admin' } },
+        { id: 93, entity: 'Document', action: 'DELETE', entityId: '8', createdAt: new Date('2026-01-08'), user: { name: 'Admin' } },
+      ]);
+      const service = new StudentsService(prisma);
+
+      const events = await service.history(7, { id: 4, role: UserRole.TEACHER });
+
+      expect(events.map((event) => event.type)).toEqual(['ENROLLMENT']);
+    });
+
+    it('returns 404 when history is requested for a missing student', async () => {
+      const prisma = historyPrisma([]) as any;
+      prisma.student.findFirst.mockResolvedValue(null);
+      const service = new StudentsService(prisma);
+
+      await expect(service.history(999)).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('includes document deletion and relevant administrative audit events', async () => {
+      const prisma = historyPrisma([]) as any;
+      prisma.document.findMany.mockResolvedValue([{ id: 8, status: 'DELETED', createdAt: new Date('2026-01-02'), originalName: 'contrato.pdf', uploader: { name: 'Ana' } }]);
+      prisma.auditLog.findMany.mockResolvedValue([
+        { id: 90, entity: 'Document', action: 'DELETE', entityId: '8', createdAt: new Date('2026-01-05'), user: { name: 'Admin' } },
+        { id: 91, entity: 'Student', action: 'UPDATE', entityId: '7', createdAt: new Date('2026-01-06'), user: { name: 'Admin' } },
+      ]);
+      const events = await new StudentsService(prisma).history(7);
+      expect(events).toEqual(expect.arrayContaining([
+        expect.objectContaining({ id: 'audit-90', type: 'DOCUMENT', description: 'Documento removido.' }),
+        expect.objectContaining({ id: 'audit-91', type: 'ENROLLMENT_CHANGE', description: 'Dados do aluno atualizados.' }),
+      ]));
+      expect(events.find((event) => event.id === 'document-8')).toBeUndefined();
     });
   });
 });
