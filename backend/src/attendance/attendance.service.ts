@@ -7,6 +7,11 @@ import { UserRole } from '../../generated/prisma/enums';
 import { AttendanceQueryDto } from './dto/attendance-query.dto';
 type UserContext = { id: number; role: UserRole };
 
+const attendanceDay = (value: Date) => ({
+  gte: new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate())),
+  lt: new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate() + 1)),
+});
+
 @Injectable()
 export class AttendanceService {
   constructor(private readonly prisma: PrismaService) {}
@@ -58,7 +63,7 @@ export class AttendanceService {
       where: {
         classId: createAttendanceDto.classId,
         studentId: createAttendanceDto.studentId,
-        attendanceDate,
+        attendanceDate: attendanceDay(attendanceDate),
       },
     });
 
@@ -106,7 +111,7 @@ export class AttendanceService {
     const existingAttendances = await this.prisma.attendance.findMany({
       where: {
         classId,
-        attendanceDate: attendanceDateValue,
+        attendanceDate: attendanceDay(attendanceDateValue),
         studentId: { in: requestedStudentIds },
       },
       select: { studentId: true },
