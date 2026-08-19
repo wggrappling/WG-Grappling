@@ -4,6 +4,7 @@
 # Build
 **/dist/
 **/coverage/
+**/*.tsbuildinfo
 
 # Environment
 .env
@@ -35,3 +36,4 @@ backend/.windsurf/
 # Database backups must remain outside version control
 /backups/
 /backend/backups/
+.claude/
