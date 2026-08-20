@@ -6,6 +6,7 @@ export default defineConfig({
         port: 5173,
     },
     preview: {
-        allowedHosts: 'wg-grappling.onrender.com'
-    }
+        host: '0.0.0.0',
+        allowedHosts: ['wg-grappling.onrender.com'],
+    },
 });
