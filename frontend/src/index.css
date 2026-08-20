@@ -134,8 +134,8 @@ body {
   flex-direction: column;
   color: #fff;
   background:
-    radial-gradient(circle at 18% 16%, rgba(59, 130, 246, 0.35), transparent 20rem),
-    linear-gradient(145deg, #0f172a 0%, #172554 62%, #1e3a8a 100%);
+    radial-gradient(circle at 18% 16%, rgba(246, 112, 59, 0.35), transparent 20rem),
+    linear-gradient(145deg, #2a160f 0%, #542e17 62%, #8a471e 100%);
 }
 
 .login-brand-panel::after {
