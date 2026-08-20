@@ -43,7 +43,17 @@ export function LoginPage() {
   return (
     <main className="login-page">
       <section className="login-brand-panel" aria-label="WG Grappling">
-        <div className="login-brand-mark">WG</div>
+        <img
+          className="login-brand-mark"
+          src="/assets/branding/wg-logo.png"
+          alt="WG Grappling"
+        />
+        <img
+          className="login-grappling-silhouette"
+          src="/assets/branding/wg-grappling-silhouette.png"
+          alt=""
+          aria-hidden="true"
+        />
         <div>
           <p className="login-brand-eyebrow">Gestão integrada</p>
           <h1>WG Grappling</h1>
@@ -57,6 +67,12 @@ export function LoginPage() {
       </section>
 
       <section className="login-form-panel">
+        <img
+          className="login-kabuto-symbol"
+          src="/assets/branding/kabuto-symbol-original-clean.png"
+          alt=""
+          aria-hidden="true"
+        />
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="login-form-heading">
             <p className="section-eyebrow">Área administrativa</p>
@@ -102,6 +118,11 @@ export function LoginPage() {
 
           <p className="login-help">Acesso exclusivo para a equipe WG Grappling.</p>
         </form>
+        <img
+          className="login-kabuto-logo"
+          src="/assets/branding/kabuto-logo.png"
+          alt="Kabuto"
+        />
       </section>
     </main>
   );
