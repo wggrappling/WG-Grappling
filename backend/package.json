@@ -19,6 +19,7 @@
     "db:backup": "node scripts/db-backup.js",
     "test:db-backup": "node --test scripts/db-backup.test.js",
     "financial:cycle": "ts-node scripts/financial-cycle.ts",
+    "seed:owner": "ts-node scripts/create-owner.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
