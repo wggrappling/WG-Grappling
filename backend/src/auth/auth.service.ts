@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
+import { verifyPassword } from './password-hashing';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
@@ -15,8 +17,17 @@ export class AuthService {
     if (!user) return null;
     if (!user.active) return null;
 
-    const passwordMatches = await bcrypt.compare(password, user.password);
-    if (!passwordMatches) return null;
+    const verification = await verifyPassword(password, user.password);
+    if (!verification.valid) return null;
+    if (verification.rehashFailed) {
+      this.logger.warn('Falha ao gerar rehash seguro da credencial.');
+    } else if (verification.rehash) {
+      try {
+        await this.usersService.upgradePasswordHash(user.id, user.password, verification.rehash);
+      } catch {
+        this.logger.warn('Falha ao persistir rehash seguro da credencial.');
+      }
+    }
 
     const { password: _password, ...safeUser } = user;
     return safeUser;

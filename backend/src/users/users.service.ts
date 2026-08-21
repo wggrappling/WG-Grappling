@@ -1,9 +1,10 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserRole } from '../../generated/prisma/enums';
+import { hashPassword } from '../auth/password-hashing';
+import { PasswordPolicyError } from '../auth/password-policy';
 
 type UserActor = { id: number; role: UserRole };
 
@@ -19,13 +20,22 @@ const assertCanManageOwner = (actor: UserActor, targetRole: UserRole) => {
   }
 };
 
+const createPasswordHash = async (password: string, context: { name?: string; email?: string }) => {
+  try {
+    return await hashPassword(password, context);
+  } catch (error) {
+    if (error instanceof PasswordPolicyError) throw new BadRequestException(error.message);
+    throw error;
+  }
+};
+
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(createUserDto: CreateUserDto, actor: UserActor) {
     assertCanAssignRole(actor, createUserDto.role as UserRole);
-    const passwordHash = await bcrypt.hash(createUserDto.password, 10);
+    const passwordHash = await createPasswordHash(createUserDto.password, createUserDto);
     const user = await this.prisma.user.create({
       data: {
         ...createUserDto,
@@ -101,7 +111,7 @@ export class UsersService {
 
     const current = await this.prisma.user.findUniqueOrThrow({
       where: { id },
-      select: { role: true, active: true },
+      select: { role: true, active: true, name: true, email: true },
     });
     assertCanManageOwner(actor, current.role);
     if (updateUserDto.role !== undefined) {
@@ -109,7 +119,10 @@ export class UsersService {
     }
 
     const password = updateUserDto.password
-      ? await bcrypt.hash(updateUserDto.password, 10)
+      ? await createPasswordHash(updateUserDto.password, {
+          name: updateUserDto.name ?? current.name,
+          email: updateUserDto.email ?? current.email,
+        })
       : undefined;
     const invalidatesSession = password !== undefined
       || (updateUserDto.role !== undefined && updateUserDto.role !== current.role)
@@ -153,5 +166,12 @@ export class UsersService {
     return {
       message: 'Usuário removido com sucesso!',
     };
+  }
+
+  async upgradePasswordHash(id: number, previousHash: string, upgradedHash: string) {
+    return this.prisma.user.updateMany({
+      where: { id, password: previousHash },
+      data: { password: upgradedHash },
+    });
   }
 }

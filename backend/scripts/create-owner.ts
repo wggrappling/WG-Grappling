@@ -1,9 +1,8 @@
 import 'dotenv/config';
-import * as bcrypt from 'bcrypt';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../generated/prisma/client';
-import { UserRole } from '../generated/prisma/enums';
+import { prepareExistingOwnerUpdate, prepareNewOwner } from '../src/auth/owner-credential';
 
 async function main() {
   const args = process.argv.slice(2);
@@ -40,28 +39,15 @@ async function main() {
       where: { email },
     });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
     if (existingUser) {
       const updated = await prisma.user.update({
         where: { email },
-        data: {
-          name,
-          password: hashedPassword,
-          role: UserRole.OWNER,
-          active: true,
-        },
+        data: await prepareExistingOwnerUpdate(existingUser, { name, email, password }),
       });
       console.log(`Usuário atualizado com sucesso como OWNER (ID: ${updated.id}, Email: ${updated.email})`);
     } else {
       const created = await prisma.user.create({
-        data: {
-          name,
-          email,
-          password: hashedPassword,
-          role: UserRole.OWNER,
-          active: true,
-        },
+        data: await prepareNewOwner({ name, email, password }),
       });
       console.log(`Usuário OWNER criado com sucesso! (ID: ${created.id}, Email: ${created.email})`);
     }

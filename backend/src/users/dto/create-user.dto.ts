@@ -7,6 +7,7 @@ import {
   IsString,
   Length,
 } from 'class-validator';
+import { IsPasswordPolicy } from '../../auth/password-policy';
 
 export enum UserRole {
   OWNER = 'OWNER',
@@ -30,9 +31,7 @@ export class CreateUserDto {
 
   @IsString()
   @IsNotEmpty({ message: 'A senha é obrigatória.' })
-  @Length(6, 128, {
-    message: 'A senha deve ter entre 6 e 128 caracteres.',
-  })
+  @IsPasswordPolicy()
   password: string;
 
   @IsEnum(UserRole, {

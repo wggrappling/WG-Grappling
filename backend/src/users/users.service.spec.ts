@@ -1,4 +1,5 @@
-import { ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import * as argon2 from 'argon2';
 import { Test, TestingModule } from '@nestjs/testing';
 import { UserRole } from '../../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
@@ -9,12 +10,12 @@ describe('UsersService security policy', () => {
   const prisma = {
     user: {
       create: jest.fn(), findUnique: jest.fn(), findUniqueOrThrow: jest.fn(),
-      update: jest.fn(), delete: jest.fn(),
+      update: jest.fn(), updateMany: jest.fn(), delete: jest.fn(),
     },
   };
   const owner = { id: 1, role: UserRole.OWNER };
   const admin = { id: 2, role: UserRole.ADMIN };
-  const ownerDto = { name: 'Owner Teste', email: 'owner@teste.local', password: 'segredo123', role: UserRole.OWNER };
+  const ownerDto = { name: 'Owner Teste', email: 'owner@teste.local', password: 'Passphrase longa e segura!', role: UserRole.OWNER };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -23,7 +24,7 @@ describe('UsersService security policy', () => {
     }).compile();
     service = module.get(UsersService);
     prisma.user.create.mockResolvedValue({ id: 10, ...ownerDto, password: 'hash', active: true, sessionVersion: 0 });
-    prisma.user.findUniqueOrThrow.mockResolvedValue({ role: UserRole.ADMIN, active: true });
+    prisma.user.findUniqueOrThrow.mockResolvedValue({ role: UserRole.ADMIN, active: true, name: 'Usuário Teste', email: 'user@teste.local' });
     prisma.user.update.mockResolvedValue({ id: 10, name: 'Usuário', email: 'user@teste.local', role: UserRole.ADMIN, active: true, createdAt: new Date() });
     prisma.user.delete.mockResolvedValue({ id: 10 });
   });
@@ -60,10 +61,10 @@ describe('UsersService security policy', () => {
   it.each([
     ['name', { name: 'Novo Nome' }],
     ['email', { email: 'novo-owner@teste.local' }],
-    ['password', { password: 'novaSenha123' }],
+    ['password', { password: 'Nova passphrase longa e segura!' }],
     ['role', { role: UserRole.ADMIN }],
     ['active', { active: false }],
-    ['combined fields', { name: 'Novo Nome', email: 'novo-owner@teste.local', password: 'novaSenha123', role: UserRole.ADMIN, active: false }],
+    ['combined fields', { name: 'Novo Nome', email: 'novo-owner@teste.local', password: 'Passphrase completamente diferente!', role: UserRole.ADMIN, active: false }],
   ])('denies ADMIN updating OWNER %s', async (_field, update) => {
     prisma.user.findUniqueOrThrow.mockResolvedValue({ role: UserRole.OWNER, active: true });
     await expect(service.update(10, update, admin)).rejects.toBeInstanceOf(ForbiddenException);
@@ -84,9 +85,9 @@ describe('UsersService security policy', () => {
   });
 
   it('increments sessionVersion when password changes', async () => {
-    await service.update(10, { password: 'novaSenha123' }, owner);
+    await service.update(10, { password: 'Nova passphrase longa e segura!' }, owner);
     expect(prisma.user.update).toHaveBeenCalledWith(expect.objectContaining({
-      data: expect.objectContaining({ password: expect.any(String), sessionVersion: { increment: 1 } }),
+      data: expect.objectContaining({ password: expect.stringMatching(/^\$argon2id\$/), sessionVersion: { increment: 1 } }),
     }));
   });
 
@@ -116,4 +117,26 @@ describe('UsersService security policy', () => {
       await expect(service.update(10, { name: 'Usuário Atualizado' }, admin)).resolves.toBeDefined();
     },
   );
+
+  it('creates new users with Argon2id without exposing the hash', async () => {
+    await service.create({ ...ownerDto, role: UserRole.ADMIN }, owner);
+    const stored = prisma.user.create.mock.calls[0][0].data.password;
+    expect(stored).toMatch(/^\$argon2id\$/);
+    expect(await argon2.verify(stored, ownerDto.password.normalize('NFC'))).toBe(true);
+  });
+
+  it('uses compare-and-swap for automatic hash upgrades without session invalidation', async () => {
+    prisma.user.updateMany.mockResolvedValue({ count: 0 });
+    await expect(service.upgradePasswordHash(10, 'old-hash', 'new-hash')).resolves.toEqual({ count: 0 });
+    expect(prisma.user.updateMany).toHaveBeenCalledWith({
+      where: { id: 10, password: 'old-hash' },
+      data: { password: 'new-hash' },
+    });
+    expect(prisma.user.updateMany.mock.calls[0][0].data).not.toHaveProperty('sessionVersion');
+  });
+
+  it('enforces the central password policy even when the service is called directly', async () => {
+    await expect(service.create({ ...ownerDto, password: 'curta demais' }, owner)).rejects.toBeInstanceOf(BadRequestException);
+    expect(prisma.user.create).not.toHaveBeenCalled();
+  });
 });
