@@ -15,8 +15,8 @@ export class UsersController {
 
   @Post()
   @Audit({ action: 'CREATE', entity: 'User' })
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  create(@Body() createUserDto: CreateUserDto, @Request() req: any) {
+    return this.usersService.create(createUserDto, req.user);
   }
 
   @Get()
@@ -37,7 +37,7 @@ export class UsersController {
 
   @Delete(':id')
   @Audit({ action: 'DELETE', entity: 'User', entityIdParam: 'id' })
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+  remove(@Param('id') id: string, @Request() req: any) {
+    return this.usersService.remove(+id, req.user);
   }
 }

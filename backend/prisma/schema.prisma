@@ -51,6 +51,7 @@ model User {
   password  String
   role      UserRole
   active    Boolean   @default(true)
+  sessionVersion Int  @default(0)
   createdAt DateTime  @default(now())
 
   classes          Class[]
