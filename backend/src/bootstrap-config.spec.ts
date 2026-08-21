@@ -43,6 +43,10 @@ describe('bootstrap configuration', () => {
       DOCUMENT_STORAGE_PATH: '/data/documents',
       DOCUMENT_MAX_SIZE_MB: 10,
       FINANCIAL_CYCLE_ENABLED: false,
+      AUTH_RATE_LIMIT_WINDOW_SECONDS: 300,
+      AUTH_RATE_LIMIT_MAX_ATTEMPTS: 20,
+      AUTH_ACCOUNT_RATE_LIMIT_MAX_ATTEMPTS: 5,
+      AUTH_LOCKOUT_SECONDS: 300,
     };
 
     it('accepts an explicit safe production configuration', () => {
@@ -80,7 +84,20 @@ describe('bootstrap configuration', () => {
         DOCUMENT_STORAGE_PATH: './storage/documents',
         DOCUMENT_MAX_SIZE_MB: 10,
         FINANCIAL_CYCLE_ENABLED: false,
+        AUTH_RATE_LIMIT_WINDOW_SECONDS: 300,
+        AUTH_RATE_LIMIT_MAX_ATTEMPTS: 20,
+        AUTH_ACCOUNT_RATE_LIMIT_MAX_ATTEMPTS: 5,
+        AUTH_LOCKOUT_SECONDS: 300,
       }));
+    });
+
+    it.each([
+      'AUTH_RATE_LIMIT_WINDOW_SECONDS',
+      'AUTH_RATE_LIMIT_MAX_ATTEMPTS',
+      'AUTH_ACCOUNT_RATE_LIMIT_MAX_ATTEMPTS',
+      'AUTH_LOCKOUT_SECONDS',
+    ])('rejects an invalid %s', (key) => {
+      expect(envValidationSchema.validate({ ...production, [key]: 0 }).error).toBeDefined();
     });
   });
 });

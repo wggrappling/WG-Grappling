@@ -61,6 +61,16 @@ model User {
   refundedPayments  Payment[] @relation("RefundedPayments")
 }
 
+model AuthRateLimitBucket {
+  key             String    @id
+  attempts        Int
+  windowStartedAt DateTime
+  lockedUntil     DateTime?
+  updatedAt       DateTime  @updatedAt
+
+  @@index([updatedAt])
+}
+
 model AuditLog {
   id        Int      @id @default(autoincrement())
   userId    Int?

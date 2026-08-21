@@ -17,6 +17,10 @@ export const envValidationSchema = Joi.object({
   REDIS_URL: Joi.string().uri().optional().messages({
     'string.uri': 'REDIS_URL deve ser uma URL válida quando configurada.',
   }),
+  AUTH_RATE_LIMIT_WINDOW_SECONDS: Joi.number().integer().positive().default(300),
+  AUTH_RATE_LIMIT_MAX_ATTEMPTS: Joi.number().integer().positive().default(20),
+  AUTH_ACCOUNT_RATE_LIMIT_MAX_ATTEMPTS: Joi.number().integer().positive().default(5),
+  AUTH_LOCKOUT_SECONDS: Joi.number().integer().positive().default(300),
   NODE_ENV: Joi.string().valid('development', 'production', 'test', 'local').required(),
   DOCUMENT_STORAGE_PATH: Joi.string().min(1).when('NODE_ENV', {
     is: 'production',
