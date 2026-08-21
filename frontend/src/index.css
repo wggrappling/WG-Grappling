@@ -118,76 +118,91 @@ body {
 }
 
 .login-page {
-  --login-orange: #f36c21;
-  display: grid;
-  grid-template-columns: minmax(390px, 44%) minmax(460px, 56%);
+  --login-orange: #ed671c;
+  --brand-axis: 41.5%;
+  position: relative;
   min-height: 100vh;
   overflow: hidden;
-  background: #080808;
+  background: #0a0a0a;
 }
 
 .login-brand-panel {
   position: relative;
   z-index: 2;
-  display: flex;
+  width: 59%;
   min-height: 100vh;
-  padding: clamp(42px, 6vw, 88px) clamp(42px, 7vw, 104px);
   overflow: hidden;
-  justify-content: center;
-  flex-direction: column;
   color: #fff;
   background:
-    linear-gradient(115deg, transparent 0 48%, rgba(255, 255, 255, 0.018) 48% 49%, transparent 49% 100%),
-    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.014) 0 1px, transparent 1px 7px),
-    radial-gradient(circle at 12% 20%, rgba(243, 108, 33, 0.13), transparent 24rem),
-    linear-gradient(145deg, #090909 0%, #111 58%, #070707 100%);
+    radial-gradient(ellipse at 2% 37%, rgba(237, 103, 28, 0.65) 0 1px, transparent 2px),
+    radial-gradient(ellipse at 5% 43%, rgba(237, 103, 28, 0.45) 0 2px, transparent 3px),
+    radial-gradient(ellipse at 8% 49%, rgba(237, 103, 28, 0.58) 0 1px, transparent 2px),
+    radial-gradient(ellipse at 3% 56%, rgba(237, 103, 28, 0.38) 0 2px, transparent 3px),
+    radial-gradient(ellipse at 10% 62%, rgba(237, 103, 28, 0.32) 0 1px, transparent 2px),
+    radial-gradient(ellipse at 4% 73%, rgba(237, 103, 28, 0.42) 0 1px, transparent 2px),
+    repeating-linear-gradient(132deg, rgba(255, 255, 255, 0.012) 0 1px, transparent 1px 6px),
+    radial-gradient(ellipse at 43% 37%, #0b0c0d 0%, #060708 50%, #010202 100%);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, auto, 100% 100%;
+  clip-path: polygon(0 0, 100% 0, 77.5% 100%, 0 100%);
   box-shadow: 16px 0 38px rgba(0, 0, 0, 0.48);
 }
 
 .login-brand-panel::before {
   position: absolute;
-  z-index: -1;
-  top: -8%;
-  right: -17px;
-  width: 4px;
-  height: 116%;
-  background: linear-gradient(180deg, transparent, var(--login-orange) 16% 84%, transparent);
-  box-shadow: 0 0 15px rgba(243, 108, 33, 0.45);
+  z-index: 4;
+  inset: 0;
+  background: var(--login-orange);
+  box-shadow: 0 0 8px rgba(237, 103, 28, 0.52);
+  clip-path: polygon(99.65% 0, 100% 0, 77.85% 100%, 77.5% 100%);
   content: "";
-  transform: rotate(4deg);
 }
 
 .login-brand-panel::after {
-  position: absolute;
-  right: 8%;
-  bottom: 12%;
-  width: min(34vw, 440px);
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(243, 108, 33, 0.65));
-  content: "";
-  transform: rotate(-4deg);
+  content: none;
 }
 
 .login-brand-mark {
-  position: relative;
+  position: absolute;
   z-index: 2;
-  width: clamp(150px, 18vw, 250px);
+  top: 48%;
+  left: var(--brand-axis);
+  width: min(74%, 620px);
   height: auto;
-  margin-bottom: 44px;
   object-fit: contain;
-  object-position: left center;
+  object-position: center;
+  transform: translate(-50%, -50%);
+}
+
+.login-brand-mark-word {
+  position: absolute;
+  z-index: 3;
+  top: 48%;
+  left: var(--brand-axis);
+  width: min(74%, 620px);
+  height: auto;
+  clip-path: inset(67% 0 0);
+  filter: invert(1) grayscale(1) brightness(2.4);
+  object-fit: contain;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
 }
 
 .login-grappling-silhouette {
   position: absolute;
   z-index: 0;
-  right: -10%;
-  bottom: -3%;
-  width: min(46vw, 610px);
+  top: 3.8%;
+  left: 14%;
+  width: 56%;
   max-width: none;
-  opacity: 0.18;
+  opacity: 0.32;
+  filter: brightness(0.62) saturate(0.82) contrast(1.12);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.018 .06' numOctaves='3' seed='21'/%3E%3CfeColorMatrix values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 1 0 0 0 0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='discrete' tableValues='0 .68 .88 1 1 1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='1024' height='1024' fill='white' filter='url(%23n)'/%3E%3C/svg%3E");
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.018 .06' numOctaves='3' seed='21'/%3E%3CfeColorMatrix values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 1 0 0 0 0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='discrete' tableValues='0 .68 .88 1 1 1'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='1024' height='1024' fill='white' filter='url(%23n)'/%3E%3C/svg%3E");
+  mask-repeat: no-repeat;
+  mask-size: 100% 100%;
   pointer-events: none;
-  transform: rotate(-5deg);
   user-select: none;
 }
 
@@ -196,8 +211,17 @@ body {
   z-index: 1;
 }
 
+.login-brand-copy {
+  position: absolute !important;
+  top: 68.4%;
+  left: var(--brand-axis);
+  width: min(58%, 470px);
+  transform: translateX(-50%);
+  text-align: center;
+}
+
 .login-brand-eyebrow {
-  margin: 0 0 10px;
+  margin: 0 0 6px;
   color: var(--login-orange);
   font-size: 0.72rem;
   font-weight: 750;
@@ -208,7 +232,7 @@ body {
 .login-brand-panel h1 {
   margin: 0;
   max-width: 520px;
-  font-size: clamp(2.5rem, 4.5vw, 4.5rem);
+  font-size: clamp(3.125rem, 3.8vw, 3.625rem);
   font-weight: 850;
   letter-spacing: -0.045em;
   line-height: 0.96;
@@ -216,38 +240,142 @@ body {
 
 .login-brand-panel > div > p:last-child {
   max-width: 470px;
-  margin: 22px 0 0;
-  color: #a8a8a8;
-  font-size: clamp(1rem, 1.6vw, 1.2rem);
-  line-height: 1.7;
+  margin: 0 auto;
+  color: #c9cbcd;
+  font-size: clamp(0.9rem, 1.25vw, 1.14rem);
+  font-weight: 450;
+  line-height: 1.38;
 }
 
 .login-brand-detail {
+  position: absolute !important;
+  top: 61.2%;
+  left: var(--brand-axis);
   display: flex;
-  gap: 20px;
-  margin-top: 58px;
-  color: #929292;
-  font-size: 0.72rem;
+  align-items: center;
+  gap: clamp(10px, 1.15vw, 17px);
+  width: max-content;
+  transform: translateX(-50%);
+  color: #f1f1f2;
+  font-size: clamp(0.68rem, 1.1vw, 1rem);
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.025em;
   text-transform: uppercase;
 }
 
-.login-brand-detail span:not(:last-child)::after {
-  margin-left: 20px;
-  color: var(--login-orange);
-  content: "•";
+.login-brand-detail i {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  background: var(--login-orange);
+  border-radius: 50%;
+  box-shadow: 0 0 5px rgba(237, 103, 28, 0.28);
 }
 
 .login-form-panel {
-  position: relative;
   display: grid;
+  position: absolute;
+  inset: 0;
   min-height: 100vh;
-  padding: 48px clamp(36px, 6vw, 96px);
+  padding: 48px 5% 48px 32%;
   place-items: center;
   background:
     radial-gradient(circle at 78% 8%, rgba(255, 255, 255, 0.72), transparent 29rem),
     linear-gradient(180deg, #d8d8d7 0%, #bcbdbc 22%, #4c4d4c 56%, #0a0a0a 88%);
+}
+
+.login-brand-modalities {
+  position: absolute !important;
+  top: 78%;
+  left: var(--brand-axis);
+  display: grid;
+  width: min(61%, 500px);
+  padding: clamp(16px, 2vh, 22px) 0;
+  grid-template-columns: repeat(3, 1fr);
+  transform: translateX(-50%);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.login-brand-modalities span {
+  padding: 2px 8px;
+  color: #e2e2e3;
+  font-size: clamp(0.6rem, 0.92vw, 0.86rem);
+  font-weight: 550;
+  line-height: 1.35;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.login-brand-detail::after {
+  position: absolute;
+  bottom: clamp(-31px, -3.1vh, -24px);
+  left: 50%;
+  width: clamp(62px, 6.4vw, 92px);
+  height: 3px;
+  background: var(--login-orange);
+  content: "";
+  transform: translateX(-50%);
+}
+
+.login-brand-modalities svg {
+  display: block;
+  width: clamp(30px, 3.2vw, 45px);
+  height: clamp(30px, 3.2vw, 45px);
+  margin: 0 auto 9px;
+  overflow: visible;
+  fill: none;
+  stroke: var(--login-orange);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.login-brand-modalities span + span {
+  border-left: 1px solid rgba(140, 51, 14, 0.72);
+}
+
+.login-brand-footer {
+  position: absolute;
+  z-index: 2;
+  bottom: 3.5%;
+  left: var(--brand-axis);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(13px, 1.75vw, 26px);
+  width: min(61%, 510px);
+  margin: 0;
+  transform: translateX(-50%);
+  color: #888a8c;
+  font-size: clamp(0.56rem, 0.82vw, 0.78rem);
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.login-brand-footer::before {
+  position: absolute;
+  top: clamp(-29px, -3.2vh, -22px);
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  content: "";
+}
+
+.login-brand-footer i {
+  width: 2px;
+  height: 20px;
+  flex: 0 0 2px;
+  background: #b8400b;
+}
+
+.login-brand-footer strong {
+  color: #d84a0b;
+  font-weight: 700;
 }
 
 .login-form-panel::after {
@@ -263,11 +391,11 @@ body {
 .login-kabuto-symbol {
   position: absolute;
   z-index: 0;
-  top: -5%;
-  right: -2%;
-  width: min(49vw, 710px);
+  top: -4%;
+  right: 2%;
+  width: min(42vw, 600px);
   max-width: none;
-  opacity: 0.055;
+  opacity: 0.07;
   clip-path: inset(6% 0 0 0);
   filter: grayscale(1) contrast(1.2);
   mix-blend-mode: multiply;
@@ -278,11 +406,11 @@ body {
 .login-kabuto-logo {
   position: absolute;
   z-index: 1;
-  right: clamp(28px, 4vw, 64px);
-  bottom: clamp(24px, 4vh, 44px);
-  width: clamp(112px, 12vw, 180px);
+  right: clamp(34px, 6vw, 84px);
+  bottom: clamp(26px, 5vh, 54px);
+  width: clamp(100px, 10vw, 145px);
   height: auto;
-  opacity: 0.72;
+  opacity: 0.54;
   filter: brightness(0) invert(1);
   object-fit: contain;
 }
@@ -290,14 +418,15 @@ body {
 .login-form {
   position: relative;
   z-index: 1;
-  width: min(100%, 430px);
-  padding: clamp(30px, 4vw, 42px);
+  width: min(100%, 330px);
+  padding: clamp(27px, 3vw, 36px);
   color: #fff;
   background: linear-gradient(145deg, rgba(24, 24, 24, 0.98), rgba(8, 8, 8, 0.99));
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-top-color: rgba(243, 108, 33, 0.5);
-  border-radius: 22px;
-  box-shadow: 0 28px 75px rgba(0, 0, 0, 0.42), 0 0 30px rgba(243, 108, 33, 0.045);
+  border-radius: 15px;
+  box-shadow: 0 24px 55px rgba(0, 0, 0, 0.46), 0 0 24px rgba(243, 108, 33, 0.04);
+  transform: translate(5vw, 3.5vh);
 }
 
 .login-form-heading {
@@ -389,10 +518,29 @@ body {
 }
 
 .login-help {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
   margin: 20px 0 0;
   color: #777;
   font-size: 0.72rem;
   text-align: center;
+}
+
+.login-help svg {
+  flex: 0 0 25px;
+  width: 25px;
+  height: 25px;
+  fill: none;
+  stroke: var(--login-orange);
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.login-help span {
+  text-align: left;
 }
 
 .session-bar {
@@ -1816,23 +1964,35 @@ h1 {
 }
 
 @media (max-width: 980px) {
-  .login-page {
-    grid-template-columns: minmax(300px, 39%) minmax(430px, 61%);
+  .login-brand-panel {
+    --brand-axis: 40%;
+    width: 57%;
   }
 
-  .login-brand-panel {
-    padding-inline: 38px;
+  .login-brand-mark {
+    width: 80%;
+  }
+
+  .login-brand-mark-word {
+    width: 80%;
   }
 
   .login-grappling-silhouette {
-    right: -24%;
-    width: 58vw;
-    opacity: 0.14;
+    left: 10%;
+    width: 63%;
   }
 
   .login-kabuto-symbol {
     right: -10%;
     width: 62vw;
+  }
+
+  .login-form-panel {
+    padding-inline: 45% 4%;
+  }
+
+  .login-form {
+    width: min(100%, 320px);
   }
 
   .financial-summary-grid {
@@ -1842,42 +2002,86 @@ h1 {
 
 @media (max-width: 700px) {
   .login-page {
-    grid-template-columns: 1fr;
+    overflow-x: hidden;
+    overflow-y: auto;
     background: #090909;
   }
 
   .login-brand-panel {
-    min-height: auto;
-    padding: 26px 24px 22px;
-    justify-content: flex-start;
-    background: #0b0b0b;
-    box-shadow: none;
+    --brand-axis: 43%;
+    width: 100%;
+    min-height: 720px;
+    clip-path: polygon(0 0, 100% 0, 77.5% 100%, 0 100%);
   }
 
   .login-brand-panel::before {
-    top: auto;
-    right: 0;
-    bottom: -2px;
-    width: 100%;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, var(--login-orange), transparent);
-    transform: none;
+    inset: 0;
+    background: var(--login-orange);
+    clip-path: polygon(99.4% 0, 100% 0, 78.1% 100%, 77.5% 100%);
   }
 
-  .login-brand-panel::after,
-  .login-brand-panel > div,
-  .login-grappling-silhouette,
+  .login-brand-mark,
+  .login-brand-mark-word {
+    top: 43%;
+    width: 86%;
+  }
+
+  .login-grappling-silhouette {
+    top: 3%;
+    left: 7%;
+    width: 78%;
+    opacity: 0.29;
+  }
+
   .login-brand-detail {
-    display: none;
+    top: 57%;
+    max-width: 82%;
+    gap: 7px;
+    font-size: clamp(0.56rem, 2.15vw, 0.7rem);
   }
 
-  .login-brand-mark {
-    margin: 0;
-    width: 118px;
+  .login-brand-detail i {
+    width: 5px;
+    height: 5px;
+    flex-basis: 5px;
+  }
+
+  .login-brand-copy {
+    top: 65%;
+    width: 72%;
+  }
+
+  .login-brand-copy p {
+    font-size: clamp(0.75rem, 3vw, 0.92rem) !important;
+  }
+
+  .login-brand-modalities {
+    top: 75%;
+    width: 82%;
+    padding: 15px 0;
+  }
+
+  .login-brand-modalities span {
+    padding-inline: 4px;
+    font-size: clamp(0.46rem, 1.8vw, 0.58rem);
+  }
+
+  .login-brand-modalities svg {
+    width: 30px;
+    height: 30px;
+  }
+
+  .login-brand-footer {
+    bottom: 3.5%;
+    gap: 8px;
+    width: 82%;
+    font-size: clamp(0.43rem, 1.7vw, 0.55rem);
   }
 
   .login-form-panel {
-    min-height: calc(100vh - 70px);
+    position: relative;
+    inset: auto;
+    min-height: 100vh;
     padding: 28px 18px;
     background: radial-gradient(circle at 50% 0%, #343434, #090909 60%);
   }
@@ -1885,6 +2089,7 @@ h1 {
   .login-form {
     padding: 30px 24px;
     border-radius: 18px;
+    transform: none;
   }
 
   .login-kabuto-symbol {
