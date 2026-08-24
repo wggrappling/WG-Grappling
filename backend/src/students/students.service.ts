@@ -1,8 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
-import { StudentModalityStatus, StudentPlanStatus, UserRole } from '../../generated/prisma/enums';
+import { StudentClassStatus, StudentModalityStatus, StudentPlanStatus, UserRole } from '../../generated/prisma/enums';
 import { Prisma } from '../../generated/prisma/client';
 import { StudentQueryDto } from './dto/student-query.dto';
 
@@ -17,7 +17,7 @@ export class StudentsService {
     const pageSize = query.pageSize ?? 20;
     const search = query.search?.trim();
     const where: Prisma.StudentWhereInput = {
-      ...(user?.role === UserRole.TEACHER ? { studentClasses: { some: { class: { teacherUserId: user.id } } } } : {}),
+      ...(user?.role === UserRole.TEACHER ? { studentClasses: { some: { status: StudentClassStatus.ACTIVE, class: { teacherUserId: user.id } } } } : {}),
       ...(query.status ? { status: query.status } : {}),
       ...(query.modalityId ? { modalities: { some: { modalityId: query.modalityId, status: StudentModalityStatus.ACTIVE } } } : {}),
       ...(search ? { OR: [
@@ -48,7 +48,7 @@ export class StudentsService {
 
   async findOne(id: number, user?: UserContext) {
     const student = await this.prisma.student.findFirst({
-      where: { id, ...(user?.role === UserRole.TEACHER ? { studentClasses: { some: { class: { teacherUserId: user.id } } } } : {}) },
+      where: { id, ...(user?.role === UserRole.TEACHER ? { studentClasses: { some: { status: StudentClassStatus.ACTIVE, class: { teacherUserId: user.id } } } } : {}) },
       include: {
         person: {
           include: { address: true },
@@ -62,6 +62,7 @@ export class StudentsService {
           include: { plan: true },
         },
         studentClasses: {
+          where: { status: StudentClassStatus.ACTIVE },
           include: {
             class: {
               include: {
@@ -103,7 +104,7 @@ export class StudentsService {
     const student = await this.findOne(id, user);
     if (!student) throw new NotFoundException('Aluno não encontrado.');
     const canAccessSensitiveHistory = user?.role !== UserRole.TEACHER;
-    const [graduations, attendances, documents, charges, plans] = await Promise.all([
+    const [graduations, attendances, documents, charges, plans, classMemberships, modalityPeriods] = await Promise.all([
       this.prisma.graduation.findMany({ where: { studentId: id }, include: { modality: { select: { name: true } }, actor: { select: { name: true } } } }),
       this.prisma.attendance.findMany({ where: { studentId: id }, include: { class: { select: { name: true } } } }),
       this.prisma.document.findMany({ where: { studentId: id }, include: { uploader: { select: { name: true } } } }),
@@ -112,6 +113,8 @@ export class StudentsService {
         include: { payments: { include: { refundedByUser: { select: { name: true } } } } },
       }),
       this.prisma.studentPlan.findMany({ where: { studentId: id }, include: { plan: { select: { name: true } } } }),
+      this.prisma.studentClass.findMany({ where: { studentId: id }, include: { class: { select: { name: true } } } }),
+      this.prisma.studentModality.findMany({ where: { studentId: id }, include: { modality: { select: { name: true } } } }),
     ]);
     const relatedAuditTargets = [
       { entity: 'Student', ids: [id] },
@@ -142,6 +145,16 @@ export class StudentsService {
       });
     });
     if (canAccessSensitiveHistory) plans.forEach(p=>events.push({id:`plan-${p.id}`,type:'ENROLLMENT_CHANGE',date:p.createdAt,description:`Plano ${p.plan.name} vinculado (${p.status}).`,actor:null,reference:{entity:'StudentPlan',id:p.id}}));
+    classMemberships.forEach((membership) => {
+      events.push({ id: `class-joined-${membership.id}`, type: 'CLASS', date: membership.joinedAt, description: `Entrada na turma ${membership.class.name}.`, actor: null, reference: { entity: 'StudentClass', id: membership.id } });
+      if (membership.leftAt) events.push({ id: `class-left-${membership.id}`, type: 'CLASS', date: membership.leftAt, description: `Saída da turma ${membership.class.name}.`, actor: null, reference: { entity: 'StudentClass', id: membership.id } });
+    });
+    modalityPeriods.forEach((period) => {
+      events.push({ id: `modality-started-${period.id}`, type: 'MODALITY', date: period.startedAt, description: `Início na modalidade ${period.modality.name}.`, actor: null, reference: { entity: 'StudentModality', id: period.id } });
+      if (period.pausedAt) events.push({ id: `modality-paused-${period.id}`, type: 'MODALITY', date: period.pausedAt, description: `Modalidade ${period.modality.name} pausada.`, actor: null, reference: { entity: 'StudentModality', id: period.id } });
+      if (period.resumedAt) events.push({ id: `modality-resumed-${period.id}`, type: 'MODALITY', date: period.resumedAt, description: `Modalidade ${period.modality.name} retomada.`, actor: null, reference: { entity: 'StudentModality', id: period.id } });
+      if (period.finishedAt) events.push({ id: `modality-finished-${period.id}`, type: 'MODALITY', date: period.finishedAt, description: `Modalidade ${period.modality.name} finalizada.`, actor: null, reference: { entity: 'StudentModality', id: period.id } });
+    });
     const auditDescriptions: Record<string, { type: string; description: string; sensitive?: boolean }> = {
       'Student:UPDATE': { type: 'ENROLLMENT_CHANGE', description: 'Dados do aluno atualizados.' },
       'Enrollment:UPDATE': { type: 'ENROLLMENT_CHANGE', description: 'Matrícula do aluno atualizada.' },
@@ -171,6 +184,16 @@ export class StudentsService {
   }
 
   async remove(id: number) {
+    const student = await this.prisma.student.findUnique({
+      where: { id },
+      select: {
+        _count: { select: { modalities: true, plans: true, attendances: true, studentClasses: true, charges: true, responsibles: true, documents: true, graduations: true } },
+      },
+    });
+    if (!student) throw new NotFoundException('Aluno não encontrado.');
+    if (Object.values(student._count).some((count) => count > 0)) {
+      throw new ConflictException('Aluno com histórico não pode ser excluído; altere o status para INACTIVE.');
+    }
     await this.prisma.student.delete({
       where: { id },
     });

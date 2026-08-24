@@ -2,7 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateClassDto } from './dto/create-class.dto';
 import { UpdateClassDto } from './dto/update-class.dto';
-import { UserRole } from '../../generated/prisma/enums';
+import { StudentClassStatus, UserRole } from '../../generated/prisma/enums';
 type UserContext = { id: number; role: UserRole };
 
 const safeRelations = {
@@ -49,6 +49,7 @@ export class ClassService {
           },
         },
         studentClasses: {
+          where: { status: StudentClassStatus.ACTIVE },
           select: {
             student: {
               select: {

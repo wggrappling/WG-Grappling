@@ -13,9 +13,9 @@ describe('Enrollment transactional maintenance', () => {
     charge: { updateMany: jest.fn() },
     auditLog: { create: jest.fn() },
     modality: { findMany: jest.fn() },
-    studentModality: { findMany: jest.fn(), create: jest.fn(), updateMany: jest.fn() },
+    studentModality: { findMany: jest.fn(), create: jest.fn(), update: jest.fn(), updateMany: jest.fn() },
     class: { findMany: jest.fn() },
-    studentClass: { findMany: jest.fn(), create: jest.fn(), deleteMany: jest.fn() },
+    studentClass: { findFirst: jest.fn(), findMany: jest.fn(), create: jest.fn(), updateMany: jest.fn() },
   };
   const prisma = { $transaction: jest.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)) };
   const service = new EnrollmentService(prisma as never, {} as never);
@@ -34,7 +34,8 @@ describe('Enrollment transactional maintenance', () => {
     tx.studentModality.updateMany.mockResolvedValue({ count: 0 });
     tx.class.findMany.mockResolvedValue([]);
     tx.studentClass.findMany.mockResolvedValue([]);
-    tx.studentClass.deleteMany.mockResolvedValue({ count: 0 });
+    tx.studentClass.findFirst.mockResolvedValue(null);
+    tx.studentClass.updateMany.mockResolvedValue({ count: 0 });
   });
 
   it('atualiza Person e Student dentro da mesma transação', async () => {
@@ -92,5 +93,23 @@ describe('Enrollment transactional maintenance', () => {
     const roles = Reflect.getMetadata(ROLES_KEY, EnrollmentController.prototype.maintain);
     expect(roles).toEqual(expect.arrayContaining([UserRole.OWNER, UserRole.ADMIN, UserRole.RECEPTION]));
     expect(roles).not.toContain(UserRole.TEACHER);
+  });
+
+  it('pausa e reativa modalidade preservando o vínculo', async () => {
+    tx.modality.findMany.mockResolvedValue([{ id: 5 }]);
+    tx.studentModality.findMany
+      .mockResolvedValueOnce([{ id: 10, modalityId: 5, status: 'ACTIVE' }])
+      .mockResolvedValueOnce([{ id: 12, modalityId: 5, status: 'PAUSED' }]);
+    tx.studentModality.updateMany.mockResolvedValue({ count: 1 });
+    await service.maintain(1, { deactivateStudentModalityIds: [10] });
+    expect(tx.studentModality.updateMany).toHaveBeenCalledWith(expect.objectContaining({ data: { status: 'PAUSED', pausedAt: expect.any(Date) } }));
+    await service.maintain(1, { addModalityIds: [5] });
+    expect(tx.studentModality.update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 12 }, data: { status: 'ACTIVE', resumedAt: expect.any(Date) } }));
+  });
+
+  it('encerra turma sem apagar e permite reentrada posterior', async () => {
+    tx.studentClass.updateMany.mockResolvedValue({ count: 1 });
+    await service.maintain(1, { removeStudentClassIds: [20] });
+    expect(tx.studentClass.updateMany).toHaveBeenCalledWith(expect.objectContaining({ data: { status: 'FINISHED', leftAt: expect.any(Date) } }));
   });
 });

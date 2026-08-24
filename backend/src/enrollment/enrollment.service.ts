@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { ChargeStatus, StudentModalityStatus, StudentPlanStatus, StudentStatus } from '../../generated/prisma/enums';
+import { ChargeStatus, StudentClassStatus, StudentModalityStatus, StudentPlanStatus, StudentStatus } from '../../generated/prisma/enums';
 import { ChargeGeneratorService } from '../charge/charge-generator.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
@@ -70,7 +70,7 @@ export class EnrollmentService {
     if (classIds.length > 0) {
       const classes = await this.prisma.class.findMany({
         where: { id: { in: classIds }, active: true, teacher: { active: true } },
-        include: { _count: { select: { studentClasses: true } } },
+        include: { _count: { select: { studentClasses: { where: { status: StudentClassStatus.ACTIVE } } } } },
       });
       if (classes.length !== classIds.length) {
         throw new NotFoundException('Uma ou mais turmas informadas não foram encontradas.');
@@ -112,14 +112,34 @@ export class EnrollmentService {
         }
       }
 
+      const activePlan = await tx.studentPlan.findFirst({
+        where: { studentId: enrolledStudentId!, status: StudentPlanStatus.ACTIVE },
+        select: { id: true },
+      });
+      if (activePlan) throw new ConflictException('O aluno já possui um plano ativo.');
+
       const createdStudentPlan = await tx.studentPlan.create({
         data: { studentId: enrolledStudentId, planId, startDate: new Date(startDate), monthlyPrice, billingDay, status: StudentPlanStatus.ACTIVE },
       });
-      const createdStudentModalities = await Promise.all(modalityIds.map((modalityId) => tx.studentModality.create({
-        data: { studentId: enrolledStudentId!, modalityId, startedAt: new Date(startDate), status: StudentModalityStatus.ACTIVE },
-      })));
+      const createdStudentModalities = await Promise.all(modalityIds.map(async (modalityId) => {
+        const current = await tx.studentModality.findFirst({
+          where: { studentId: enrolledStudentId!, modalityId, status: { in: [StudentModalityStatus.ACTIVE, StudentModalityStatus.PAUSED] } },
+        });
+        if (current?.status === StudentModalityStatus.ACTIVE) {
+          throw new ConflictException('O aluno já possui vínculo ativo com uma modalidade selecionada.');
+        }
+        if (current?.status === StudentModalityStatus.PAUSED) {
+          return tx.studentModality.update({
+            where: { id: current.id },
+            data: { status: StudentModalityStatus.ACTIVE, resumedAt: new Date(startDate) },
+          });
+        }
+        return tx.studentModality.create({
+          data: { studentId: enrolledStudentId!, modalityId, startedAt: new Date(startDate), status: StudentModalityStatus.ACTIVE },
+        });
+      }));
       const createdStudentClasses = await Promise.all(classIds.map((classId) => tx.studentClass.create({
-        data: { studentId: enrolledStudentId!, classId },
+        data: { studentId: enrolledStudentId!, classId, status: StudentClassStatus.ACTIVE, joinedAt: new Date(startDate) },
       })));
 
       await this.chargeGeneratorService.generateEnrollmentCharges(
@@ -220,32 +240,61 @@ export class EnrollmentService {
       if (addModalityIds.length) {
         const valid = await tx.modality.findMany({ where: { id: { in: addModalityIds }, active: true }, select: { id: true } });
         if (valid.length !== addModalityIds.length) throw new NotFoundException('Uma ou mais modalidades ativas não foram encontradas.');
-        const existing = await tx.studentModality.findMany({ where: { studentId, modalityId: { in: addModalityIds } }, select: { modalityId: true } });
-        if (existing.length) throw new ConflictException('Uma ou mais modalidades já possuem vínculo com o aluno.');
-        await Promise.all(addModalityIds.map((modalityId) => tx.studentModality.create({ data: { studentId, modalityId, startedAt: new Date(), status: StudentModalityStatus.ACTIVE } })));
+        const existing = await tx.studentModality.findMany({
+          where: { studentId, modalityId: { in: addModalityIds }, status: { in: [StudentModalityStatus.ACTIVE, StudentModalityStatus.PAUSED] } },
+        });
+        if (existing.some((item) => item.status === StudentModalityStatus.ACTIVE)) {
+          throw new ConflictException('Uma ou mais modalidades já possuem vínculo ativo com o aluno.');
+        }
+        const existingByModality = new Map(existing.map((item) => [item.modalityId, item]));
+        await Promise.all(addModalityIds.map((modalityId) => {
+          const current = existingByModality.get(modalityId);
+          return current
+            ? tx.studentModality.update({ where: { id: current.id }, data: { status: StudentModalityStatus.ACTIVE, resumedAt: new Date() } })
+            : tx.studentModality.create({ data: { studentId, modalityId, startedAt: new Date(), status: StudentModalityStatus.ACTIVE } });
+        }));
       }
       const deactivateIds = [...new Set(dto.deactivateStudentModalityIds ?? [])];
       if (deactivateIds.length) {
-        const result = await tx.studentModality.updateMany({ where: { id: { in: deactivateIds }, studentId, status: StudentModalityStatus.ACTIVE }, data: { status: StudentModalityStatus.PAUSED } });
+        const periods = await tx.studentModality.findMany({
+          where: { id: { in: deactivateIds }, studentId, status: StudentModalityStatus.ACTIVE },
+          select: { id: true, modalityId: true },
+        });
+        if (periods.length !== deactivateIds.length) throw new NotFoundException('Vínculo ativo de modalidade não encontrado.');
+        const removingClassIds = new Set(dto.removeStudentClassIds ?? []);
+        const incompatibleClass = await tx.studentClass.findFirst({
+          where: {
+            studentId,
+            status: StudentClassStatus.ACTIVE,
+            id: { notIn: [...removingClassIds] },
+            class: { modalityId: { in: periods.map(({ modalityId }) => modalityId) } },
+          },
+          select: { id: true },
+        });
+        if (incompatibleClass) throw new ConflictException('Remova as turmas ativas da modalidade antes de pausá-la.');
+        const result = await tx.studentModality.updateMany({ where: { id: { in: deactivateIds }, studentId, status: StudentModalityStatus.ACTIVE }, data: { status: StudentModalityStatus.PAUSED, pausedAt: new Date() } });
         if (result.count !== deactivateIds.length) throw new NotFoundException('Vínculo ativo de modalidade não encontrado.');
       }
 
       const removeClassIds = [...new Set(dto.removeStudentClassIds ?? [])];
       if (removeClassIds.length) {
-        const result = await tx.studentClass.deleteMany({ where: { id: { in: removeClassIds }, studentId } });
+        const result = await tx.studentClass.updateMany({
+          where: { id: { in: removeClassIds }, studentId, status: StudentClassStatus.ACTIVE },
+          data: { status: StudentClassStatus.FINISHED, leftAt: new Date() },
+        });
         if (result.count !== removeClassIds.length) throw new NotFoundException('Vínculo de turma não encontrado.');
       }
       const addClassIds = [...new Set(dto.addClassIds ?? [])];
       if (addClassIds.length) {
-        const classes = await tx.class.findMany({ where: { id: { in: addClassIds }, active: true, teacher: { active: true } }, include: { _count: { select: { studentClasses: true } } } });
+        const classes = await tx.class.findMany({ where: { id: { in: addClassIds }, active: true, teacher: { active: true } }, include: { _count: { select: { studentClasses: { where: { status: StudentClassStatus.ACTIVE } } } } } });
         if (classes.length !== addClassIds.length) throw new NotFoundException('Uma ou mais turmas ativas não foram encontradas.');
-        const existing = await tx.studentClass.findMany({ where: { studentId, classId: { in: addClassIds } }, select: { classId: true } });
+        const existing = await tx.studentClass.findMany({ where: { studentId, classId: { in: addClassIds }, status: StudentClassStatus.ACTIVE }, select: { classId: true } });
         if (existing.length) throw new ConflictException('O aluno já possui vínculo com uma das turmas.');
         const activeModalities = await tx.studentModality.findMany({ where: { studentId, status: StudentModalityStatus.ACTIVE }, select: { modalityId: true } });
         const activeIds = new Set(activeModalities.map(({ modalityId }) => modalityId));
         if (classes.some((item) => !activeIds.has(item.modalityId))) throw new ConflictException('Turma incompatível com as modalidades ativas do aluno.');
         if (classes.some((item) => item._count.studentClasses >= item.capacity)) throw new ConflictException('Uma ou mais turmas atingiram a capacidade.');
-        await Promise.all(addClassIds.map((classId) => tx.studentClass.create({ data: { studentId, classId } })));
+        await Promise.all(addClassIds.map((classId) => tx.studentClass.create({ data: { studentId, classId, status: StudentClassStatus.ACTIVE, joinedAt: new Date() } })));
       }
 
       return { message: 'Matrícula atualizada integralmente.', data: { studentId } };

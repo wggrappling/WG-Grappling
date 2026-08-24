@@ -51,10 +51,10 @@ export class StudentModalityController {
   }
 
   @Delete(':id')
-  @Audit({ action: 'DELETE', entity: 'StudentModality', entityIdParam: 'id' })
-  @ApiOperation({ summary: 'Remover associação estudante-modalidade' })
+  @Audit({ action: 'FINISH', entity: 'StudentModality', entityIdParam: 'id' })
+  @ApiOperation({ summary: 'Finalizar associação estudante-modalidade' })
   @ApiParam({ name: 'id', description: 'ID da associação' })
-  @ApiResponse({ status: 200, description: 'Associação removida com sucesso.' })
+  @ApiResponse({ status: 200, description: 'Associação finalizada com sucesso.' })
   remove(@Param('id') id: string) {
     return this.studentModalityService.remove(Number(id));
   }

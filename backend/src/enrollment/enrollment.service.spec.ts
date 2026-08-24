@@ -5,8 +5,8 @@ describe('EnrollmentService', () => {
   const tx = {
     person: { create: jest.fn() },
     student: { create: jest.fn() },
-    studentPlan: { create: jest.fn() },
-    studentModality: { create: jest.fn() },
+    studentPlan: { findFirst: jest.fn(), create: jest.fn() },
+    studentModality: { findFirst: jest.fn(), create: jest.fn(), update: jest.fn() },
     studentClass: { create: jest.fn() },
     address: { create: jest.fn() },
     responsible: { create: jest.fn() },
@@ -35,6 +35,9 @@ describe('EnrollmentService', () => {
     tx.person.create.mockResolvedValue({ id: 10 });
     tx.student.create.mockResolvedValue({ id: 20 });
     tx.studentPlan.create.mockResolvedValue({ id: 30 });
+    tx.studentPlan.findFirst.mockResolvedValue(null);
+    tx.studentModality.findFirst.mockResolvedValue(null);
+    tx.studentModality.update.mockResolvedValue({ id: 41 });
     tx.studentModality.create.mockResolvedValue({ id: 40 });
     tx.studentClass.create.mockResolvedValue({ id: 50 });
     tx.address.create.mockResolvedValue({ id: 60 });
@@ -60,6 +63,20 @@ describe('EnrollmentService', () => {
     expect(tx.studentPlan.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ studentId: 7 }) }));
     expect(chargeGenerator.generateEnrollmentCharges).toHaveBeenCalledWith(7, 2, expect.any(Date), 10, 150, tx);
     expect(response.data.studentId).toBe(7);
+  });
+
+  it('impede segundo plano ACTIVE no fluxo de matrícula', async () => {
+    prisma.student.findUnique.mockResolvedValue({ id: 7 });
+    tx.studentPlan.findFirst.mockResolvedValue({ id: 99 });
+    await expect(service.create({ ...base, studentId: 7 })).rejects.toBeInstanceOf(ConflictException);
+    expect(tx.studentPlan.create).not.toHaveBeenCalled();
+  });
+
+  it('reativa modalidade PAUSED no fluxo de matrícula', async () => {
+    prisma.student.findUnique.mockResolvedValue({ id: 7 });
+    tx.studentModality.findFirst.mockResolvedValue({ id: 41, status: 'PAUSED' });
+    await service.create({ ...base, studentId: 7 });
+    expect(tx.studentModality.update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 41 }, data: expect.objectContaining({ status: 'ACTIVE', resumedAt: expect.any(Date) }) }));
   });
 
   it('cria pessoa, aluno e matrícula na mesma transação', async () => {

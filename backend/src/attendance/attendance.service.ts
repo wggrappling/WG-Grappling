@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateAttendanceDto } from './dto/create-attendance.dto';
 import { CreateAttendanceBatchDto } from './dto/create-attendance-batch.dto';
 import { UpdateAttendanceDto } from './dto/update-attendance.dto';
-import { UserRole } from '../../generated/prisma/enums';
+import { StudentClassStatus, UserRole } from '../../generated/prisma/enums';
 import { AttendanceQueryDto } from './dto/attendance-query.dto';
 type UserContext = { id: number; role: UserRole };
 
@@ -54,7 +54,7 @@ export class AttendanceService {
     const attendanceDate = new Date(createAttendanceDto.attendanceDate);
 
     const studentClass = await this.prisma.studentClass.findFirst({
-      where: { classId: createAttendanceDto.classId, studentId: createAttendanceDto.studentId },
+      where: { classId: createAttendanceDto.classId, studentId: createAttendanceDto.studentId, status: StudentClassStatus.ACTIVE },
       select: { id: true },
     });
     if (!studentClass) throw new NotFoundException('Aluno não encontrado nesta turma.');
@@ -96,7 +96,7 @@ export class AttendanceService {
     }
 
     const studentClassRelations = await this.prisma.studentClass.findMany({
-      where: { classId },
+      where: { classId, status: StudentClassStatus.ACTIVE },
       select: { studentId: true },
     });
 

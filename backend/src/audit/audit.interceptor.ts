@@ -25,7 +25,7 @@ export class AuditInterceptor implements NestInterceptor {
       const userId = request.user?.id ?? result?.user?.id;
       const rawId = definition.entityIdParam
         ? request.params?.[definition.entityIdParam]
-        : (result?.id ?? result?.user?.id ?? result?.student?.id);
+        : (result?.id ?? result?.user?.id ?? result?.student?.id ?? result?.data?.studentId);
       void this.auditService.record({
         userId,
         action: definition.action,

@@ -32,6 +32,19 @@ describe('AuditInterceptor', () => {
     });
   });
 
+  it('uses the transactional enrollment studentId as the audited entity id', (done) => {
+    const reflector = { getAllAndOverride: jest.fn().mockReturnValue({ action: 'CREATE', entity: 'Enrollment' }) };
+    const auditService = { record: jest.fn().mockResolvedValue({ id: 1 }) };
+    const context = { getHandler: jest.fn(), getClass: jest.fn(), switchToHttp: () => ({ getRequest: () => ({ user: { id: 9 }, params: {}, body: { planId: 2 } }) }) };
+    const interceptor = new AuditInterceptor(reflector as any, auditService as any);
+    interceptor.intercept(context as any, { handle: () => of({ message: 'ok', data: { studentId: 42 } }) }).subscribe({
+      complete: () => {
+        expect(auditService.record).toHaveBeenCalledWith(expect.objectContaining({ userId: 9, entityId: '42' }));
+        done();
+      },
+    });
+  });
+
   it('does not create a false audit entry when the operation fails', (done) => {
     const reflector = { getAllAndOverride: jest.fn().mockReturnValue({ action: 'DELETE', entity: 'Plan', entityIdParam: 'id' }) };
     const auditService = { record: jest.fn() };

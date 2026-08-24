@@ -40,10 +40,10 @@ export class StudentClassController {
   }
 
   @Delete(':id')
-  @Audit({ action: 'DELETE', entity: 'StudentClass', entityIdParam: 'id' })
-  @ApiOperation({ summary: 'Remover associação aluno-turma' })
+  @Audit({ action: 'FINISH', entity: 'StudentClass', entityIdParam: 'id' })
+  @ApiOperation({ summary: 'Encerrar associação aluno-turma' })
   @ApiParam({ name: 'id', description: 'ID da associação' })
-  @ApiResponse({ status: 200, description: 'Associação removida com sucesso.' })
+  @ApiResponse({ status: 200, description: 'Associação encerrada com sucesso.' })
   remove(@Param('id') id: string) {
     return this.studentClassService.remove(Number(id));
   }

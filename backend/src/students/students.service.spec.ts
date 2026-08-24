@@ -1,5 +1,5 @@
-import { StudentModalityStatus, StudentPlanStatus, UserRole } from '../../generated/prisma/enums';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { StudentClassStatus, StudentModalityStatus, StudentPlanStatus, UserRole } from '../../generated/prisma/enums';
+import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { StudentsService } from './students.service';
 
@@ -20,7 +20,7 @@ describe('StudentsService', () => {
       const count = jest.fn(); const findMany = jest.fn();
       const service = new StudentsService({ student: { count, findMany }, $transaction: jest.fn().mockResolvedValue([0, []]) } as unknown as PrismaService);
       await service.findAll({ id: 9, role: UserRole.TEACHER });
-      expect(count.mock.calls[0][0].where).toEqual({ studentClasses: { some: { class: { teacherUserId: 9 } } } });
+      expect(count.mock.calls[0][0].where).toEqual({ studentClasses: { some: { status: StudentClassStatus.ACTIVE, class: { teacherUserId: 9 } } } });
     });
   });
 
@@ -56,6 +56,7 @@ describe('StudentsService', () => {
             include: { plan: true },
           },
           studentClasses: {
+            where: { status: StudentClassStatus.ACTIVE },
             include: {
               class: {
                 include: {
@@ -96,7 +97,7 @@ describe('StudentsService', () => {
       const findFirst = jest.fn().mockResolvedValue({ id: 7, plans: [{ id: 11 }] });
       const service = new StudentsService({ student: { findFirst } } as unknown as PrismaService);
       await expect(service.findOne(7, { id: 4, role: UserRole.TEACHER })).resolves.toEqual({ id: 7, plans: [] });
-      expect(findFirst.mock.calls[0][0].where).toEqual({ id: 7, studentClasses: { some: { class: { teacherUserId: 4 } } } });
+      expect(findFirst.mock.calls[0][0].where).toEqual({ id: 7, studentClasses: { some: { status: StudentClassStatus.ACTIVE, class: { teacherUserId: 4 } } } });
     });
 
     it('rejects a teacher accessing a student outside their classes', async () => {
@@ -113,6 +114,8 @@ describe('StudentsService', () => {
       document: { findMany: jest.fn().mockResolvedValue([]) },
       charge: { findMany: jest.fn().mockResolvedValue([{ id: 20, description: 'Mensalidade', status: 'PARTIALLY_PAID', createdAt: new Date('2026-01-02T00:00:00Z'), payments }]) },
       studentPlan: { findMany: jest.fn().mockResolvedValue([]) },
+      studentClass: { findMany: jest.fn().mockResolvedValue([]) },
+      studentModality: { findMany: jest.fn().mockResolvedValue([]) },
       auditLog: { findMany: jest.fn().mockResolvedValue([]) },
     }) as unknown as PrismaService;
 
@@ -178,6 +181,20 @@ describe('StudentsService', () => {
         expect.objectContaining({ id: 'audit-91', type: 'ENROLLMENT_CHANGE', description: 'Dados do aluno atualizados.' }),
       ]));
       expect(events.find((event) => event.id === 'document-8')).toBeUndefined();
+    });
+  });
+
+  describe('student lifecycle', () => {
+    it.each(['ACTIVE', 'PAUSED', 'INACTIVE'] as const)('preserva vínculos ao alterar status para %s', async (status) => {
+      const update = jest.fn().mockResolvedValue({ id: 7, status });
+      const service = new StudentsService({ student: { update } } as unknown as PrismaService);
+      await service.update(7, { status });
+      expect(update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 7 }, data: { status } }));
+    });
+
+    it('impede hard delete quando há histórico', async () => {
+      const service = new StudentsService({ student: { findUnique: jest.fn().mockResolvedValue({ _count: { modalities: 1, plans: 0, attendances: 0, studentClasses: 0, charges: 0, responsibles: 0, documents: 0, graduations: 0 } }), delete: jest.fn() } } as unknown as PrismaService);
+      await expect(service.remove(7)).rejects.toBeInstanceOf(ConflictException);
     });
   });
 });
