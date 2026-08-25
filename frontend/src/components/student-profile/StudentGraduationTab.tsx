@@ -5,7 +5,7 @@ import type { BeltRank, Graduation, Student } from '../../types';
 
 const belts: BeltRank[] = ['WHITE', 'BLUE', 'PURPLE', 'BROWN', 'BLACK'];
 const names: Record<BeltRank, string> = { WHITE: 'Branca', BLUE: 'Azul', PURPLE: 'Roxa', BROWN: 'Marrom', BLACK: 'Preta' };
-const emptyForm = () => ({ modalityId: '', belt: 'WHITE' as BeltRank, beltStartedAt: new Date().toISOString().slice(0, 10), graduatedAt: new Date().toISOString().slice(0, 10), notes: '' });
+const emptyForm = () => ({ modalityId: '', belt: 'WHITE' as BeltRank, beltStartedAt: new Date().toISOString().slice(0, 10), graduatedAt: new Date().toISOString().slice(0, 10), notes: '', correctionReason: '' });
 
 export function StudentGraduationTab({ student }: { student: Student }) {
   const { user } = useAuth();
@@ -30,7 +30,7 @@ export function StudentGraduationTab({ student }: { student: Student }) {
   const cancelEdit = () => { setEditingId(null); setForm(emptyForm()); setError(''); };
   const edit = (graduation: Graduation) => {
     setEditingId(graduation.id);
-    setForm({ modalityId: String(graduation.modalityId), belt: graduation.belt, beltStartedAt: graduation.beltStartedAt.slice(0, 10), graduatedAt: graduation.graduatedAt.slice(0, 10), notes: graduation.notes ?? '' });
+    setForm({ modalityId: String(graduation.modalityId), belt: graduation.belt ?? 'WHITE', beltStartedAt: graduation.beltStartedAt.slice(0, 10), graduatedAt: graduation.graduatedAt.slice(0, 10), notes: graduation.notes ?? '', correctionReason: '' });
     setMessage(''); setError('');
   };
   const submit = async (event: FormEvent) => {
@@ -39,7 +39,7 @@ export function StudentGraduationTab({ student }: { student: Student }) {
     setSaving(true); setError(''); setMessage('');
     const body = { belt: form.belt, beltStartedAt: `${form.beltStartedAt}T00:00:00.000Z`, graduatedAt: `${form.graduatedAt}T00:00:00.000Z`, ...(form.notes.trim() ? { notes: form.notes.trim() } : {}) };
     try {
-      if (editingId) await historyService.updateGraduation(editingId, body);
+      if (editingId) await historyService.updateGraduation(editingId, { ...body, correctionReason: form.correctionReason });
       else await historyService.createGraduation(student.id, { modalityId: Number(form.modalityId), ...body });
       setMessage(editingId ? 'Graduação atualizada com sucesso.' : 'Graduação registrada com sucesso.');
       setEditingId(null); setForm(emptyForm()); await load();
@@ -56,10 +56,11 @@ export function StudentGraduationTab({ student }: { student: Student }) {
       <label>Início da faixa<input required type="date" value={form.beltStartedAt} onChange={(event) => setForm({ ...form, beltStartedAt: event.target.value })} /></label>
       <label>Data da graduação<input required type="date" value={form.graduatedAt} onChange={(event) => setForm({ ...form, graduatedAt: event.target.value })} /></label>
       <input placeholder="Observação" value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} />
+      {editingId && <input required minLength={3} placeholder="Motivo da correção" value={form.correctionReason} onChange={(event) => setForm({ ...form, correctionReason: event.target.value })} />}
       <button disabled={saving || (!editingId && eligibleModalities.length === 0)}>{saving ? 'Salvando...' : editingId ? 'Salvar edição' : 'Registrar graduação'}</button>
       {editingId && <button type="button" className="secondary-action-button" onClick={cancelEdit} disabled={saving}>Cancelar</button>}
     </form>}
     {canManage && eligibleModalities.length === 0 && !editingId && <div className="documents-state">Nenhuma modalidade ativa elegível para graduação.</div>}
-    {loading ? <div className="documents-state"><span className="loading-spinner" /><p>Carregando graduações...</p></div> : items.length === 0 ? <div className="documents-state">Nenhuma graduação registrada.</div> : items.map((graduation, index) => <div className="link-row" key={graduation.id}><span><strong>{graduation.modality.name}: faixa {names[graduation.belt]}</strong><small>{index === 0 ? 'Atual · ' : ''}{new Date(graduation.graduatedAt).toLocaleDateString('pt-BR')} · {graduation.actor.name}</small></span>{canManage && <button type="button" className="secondary-action-button" onClick={() => edit(graduation)}>Editar</button>}</div>)}
+    {loading ? <div className="documents-state"><span className="loading-spinner" /><p>Carregando graduações...</p></div> : items.length === 0 ? <div className="documents-state">Nenhuma graduação registrada.</div> : items.map((graduation) => <div className="link-row" key={graduation.id}><span><strong>{graduation.modality.name}: {graduation.graduationLevel?.name ?? (graduation.belt ? `faixa ${names[graduation.belt]}` : 'nível não informado')}</strong><small>{graduation.status === 'ACTIVE' ? 'Atual · ' : graduation.status === 'SUPERSEDED' ? 'Corrigida · ' : 'Cancelada · '}{new Date(graduation.graduatedAt).toLocaleDateString('pt-BR')} · {graduation.actor.name}</small></span>{canManage && graduation.status === 'ACTIVE' && <button type="button" className="secondary-action-button" onClick={() => edit(graduation)}>Editar</button>}</div>)}
   </section>;
 }

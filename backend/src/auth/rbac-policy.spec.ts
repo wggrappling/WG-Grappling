@@ -59,11 +59,18 @@ describe('RBAC endpoint policy', () => {
     [DocumentsController, 'remove', 'DELETE', 'Document'],
     [GraduationController, 'create', 'CREATE', 'Graduation'],
     [GraduationController, 'update', 'UPDATE', 'Graduation'],
+    [GraduationController, 'cancel', 'CANCEL', 'Graduation'],
     [ChargeController, 'create', 'CREATE', 'Charge'],
     [ChargeController, 'update', 'UPDATE', 'Charge'],
     [ChargeController, 'remove', 'CANCEL', 'Charge'],
   ])('audits %s.%s as %s/%s', (controller, method, action, entity) => {
     expect(Reflect.getMetadata(AUDIT_KEY, (controller as any).prototype[method as string])).toEqual(expect.objectContaining({ action, entity }));
+  });
+
+  it('allows teachers to record academic decisions but not correct or cancel history', () => {
+    expect(rolesFor(GraduationController.prototype, 'create')).toContain(UserRole.TEACHER);
+    expect(rolesFor(GraduationController.prototype, 'update')).toEqual([UserRole.OWNER, UserRole.ADMIN]);
+    expect(rolesFor(GraduationController.prototype, 'cancel')).toEqual([UserRole.OWNER, UserRole.ADMIN]);
   });
 
   it('keeps reception and teacher permissions unchanged on administrative catalogs', () => {

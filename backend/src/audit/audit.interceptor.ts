@@ -23,7 +23,11 @@ export class AuditInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest();
     return next.handle().pipe(tap((result) => {
       const userId = request.user?.id ?? result?.user?.id;
-      const rawId = definition.entityIdParam
+      const isGraduationCorrection = definition.entity === 'Graduation' && definition.action === 'UPDATE';
+      const isGraduationCancellation = definition.entity === 'Graduation' && definition.action === 'CANCEL';
+      const rawId = isGraduationCorrection
+        ? result?.id
+        : definition.entityIdParam
         ? request.params?.[definition.entityIdParam]
         : (result?.id ?? result?.user?.id ?? result?.student?.id ?? result?.data?.studentId);
       void this.auditService.record({
@@ -31,7 +35,33 @@ export class AuditInterceptor implements NestInterceptor {
         action: definition.action,
         entity: definition.entity,
         entityId: rawId === undefined || rawId === null ? undefined : String(rawId),
-        metadata: auditMetadata(request.body),
+        metadata: {
+          ...auditMetadata(request.body),
+          ...(definition.entity === 'Graduation' && request.params?.id && request.route?.path?.startsWith('/students/')
+            ? { studentId: Number(request.params.id) }
+            : {}),
+          ...(definition.entity === 'Graduation' && request.body?.modalityId
+            ? { modalityId: request.body.modalityId }
+            : {}),
+          ...(isGraduationCorrection ? {
+            operation: 'CORRECTION',
+            previousGraduationId: result?.correctsGraduationId ?? Number(request.params?.id),
+            newGraduationId: result?.id,
+            studentId: result?.studentId,
+            modalityId: result?.modalityId,
+            actorId: userId,
+            correctionReason: result?.correctionReason ?? request.body?.correctionReason,
+          } : {}),
+          ...(isGraduationCancellation ? {
+            operation: 'CANCEL',
+            graduationId: result?.id ?? Number(request.params?.id),
+            studentId: result?.studentId,
+            modalityId: result?.modalityId,
+            actorId: userId,
+            cancellationReason: result?.cancellationReason ?? request.body?.reason,
+          } : {}),
+          ...(definition.entity === 'Graduation' ? { result: 'SUCCESS' } : {}),
+        },
       });
     }));
   }

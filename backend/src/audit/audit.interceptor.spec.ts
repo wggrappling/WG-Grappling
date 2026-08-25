@@ -45,6 +45,71 @@ describe('AuditInterceptor', () => {
     });
   });
 
+  it('records graduation student, modality, result and responsible actor without sensitive data', (done) => {
+    const reflector = { getAllAndOverride: jest.fn().mockReturnValue({ action: 'CREATE', entity: 'Graduation' }) };
+    const auditService = { record: jest.fn().mockResolvedValue({ id: 1 }) };
+    const request = {
+      user: { id: 9 },
+      params: { id: '42' },
+      route: { path: '/students/:id/graduations' },
+      body: { modalityId: 2, graduationLevelId: 7, notes: 'observação', token: 'never-store' },
+    };
+    const context = { getHandler: jest.fn(), getClass: jest.fn(), switchToHttp: () => ({ getRequest: () => request }) };
+    const interceptor = new AuditInterceptor(reflector as any, auditService as any);
+    interceptor.intercept(context as any, { handle: () => of({ id: 15 }) }).subscribe({
+      complete: () => {
+        expect(auditService.record).toHaveBeenCalledWith(expect.objectContaining({
+          userId: 9,
+          action: 'CREATE',
+          entity: 'Graduation',
+          entityId: '15',
+          metadata: expect.objectContaining({ studentId: 42, modalityId: 2, result: 'SUCCESS' }),
+        }));
+        expect(JSON.stringify(auditService.record.mock.calls)).not.toContain('never-store');
+        done();
+      },
+    });
+  });
+
+  it('records complete graduation correction metadata and uses the new graduation as entity id', (done) => {
+    const reflector = { getAllAndOverride: jest.fn().mockReturnValue({ action: 'UPDATE', entity: 'Graduation', entityIdParam: 'id' }) };
+    const auditService = { record: jest.fn().mockResolvedValue({ id: 1 }) };
+    const request = { user: { id: 9 }, params: { id: '15' }, body: { correctionReason: 'Grau lançado incorretamente', token: 'never-store' } };
+    const context = { getHandler: jest.fn(), getClass: jest.fn(), switchToHttp: () => ({ getRequest: () => request }) };
+    const interceptor = new AuditInterceptor(reflector as any, auditService as any);
+    interceptor.intercept(context as any, { handle: () => of({ id: 16, correctsGraduationId: 15, studentId: 42, modalityId: 2, correctedBy: 9, correctionReason: 'Grau lançado incorretamente' }) }).subscribe({
+      complete: () => {
+        expect(auditService.record).toHaveBeenCalledWith(expect.objectContaining({
+          userId: 9,
+          action: 'UPDATE',
+          entityId: '16',
+          metadata: expect.objectContaining({ operation: 'CORRECTION', previousGraduationId: 15, newGraduationId: 16, studentId: 42, modalityId: 2, actorId: 9, correctionReason: 'Grau lançado incorretamente', result: 'SUCCESS' }),
+        }));
+        expect(JSON.stringify(auditService.record.mock.calls)).not.toContain('never-store');
+        done();
+      },
+    });
+  });
+
+  it('records complete graduation cancellation metadata', (done) => {
+    const reflector = { getAllAndOverride: jest.fn().mockReturnValue({ action: 'CANCEL', entity: 'Graduation', entityIdParam: 'id' }) };
+    const auditService = { record: jest.fn().mockResolvedValue({ id: 1 }) };
+    const request = { user: { id: 9 }, params: { id: '16' }, body: { reason: 'Lançamento duplicado' } };
+    const context = { getHandler: jest.fn(), getClass: jest.fn(), switchToHttp: () => ({ getRequest: () => request }) };
+    const interceptor = new AuditInterceptor(reflector as any, auditService as any);
+    interceptor.intercept(context as any, { handle: () => of({ id: 16, studentId: 42, modalityId: 2, cancelledBy: 9, cancellationReason: 'Lançamento duplicado' }) }).subscribe({
+      complete: () => {
+        expect(auditService.record).toHaveBeenCalledWith(expect.objectContaining({
+          userId: 9,
+          action: 'CANCEL',
+          entityId: '16',
+          metadata: expect.objectContaining({ operation: 'CANCEL', graduationId: 16, studentId: 42, modalityId: 2, actorId: 9, cancellationReason: 'Lançamento duplicado', result: 'SUCCESS' }),
+        }));
+        done();
+      },
+    });
+  });
+
   it('does not create a false audit entry when the operation fails', (done) => {
     const reflector = { getAllAndOverride: jest.fn().mockReturnValue({ action: 'DELETE', entity: 'Plan', entityIdParam: 'id' }) };
     const auditService = { record: jest.fn() };

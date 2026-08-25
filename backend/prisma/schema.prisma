@@ -56,7 +56,9 @@ model User {
 
   classes          Class[]
   uploadedDocuments Document[] @relation("UploadedDocuments")
-  graduations       Graduation[]
+  graduations       Graduation[] @relation("GrantedGraduations")
+  correctedGraduations Graduation[] @relation("CorrectedGraduations")
+  cancelledGraduations Graduation[] @relation("CancelledGraduations")
   auditLogs         AuditLog[]
   refundedPayments  Payment[] @relation("RefundedPayments")
 }
@@ -209,23 +211,67 @@ model Modality {
   studentModalities StudentModality[]
   classes           Class[]
   graduations       Graduation[]
+  graduationLevels  GraduationLevel[]
+}
+
+model GraduationLevel {
+  id         Int      @id @default(autoincrement())
+  modalityId Int
+  code       String
+  name       String
+  rankOrder  Int
+  minDegree  Int?
+  maxDegree  Int?
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  modality   Modality     @relation(fields: [modalityId], references: [id], onDelete: Restrict)
+  graduations Graduation[]
+
+  @@unique([modalityId, code])
+  @@unique([modalityId, rankOrder])
+  @@index([modalityId, active])
+}
+
+enum GraduationStatus {
+  ACTIVE
+  CANCELLED
+  SUPERSEDED
 }
 
 model Graduation {
   id Int @id @default(autoincrement())
   studentId Int
   modalityId Int
-  belt BeltRank
+  belt BeltRank?
+  graduationLevelId Int?
+  degree Int?
   beltStartedAt DateTime
   graduatedAt DateTime
   notes String?
   graduatedBy Int
+  status GraduationStatus @default(ACTIVE)
+  correctedBy Int?
+  correctedAt DateTime?
+  correctionReason String?
+  cancelledBy Int?
+  cancelledAt DateTime?
+  cancellationReason String?
+  correctsGraduationId Int? @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   student Student @relation(fields: [studentId], references: [id])
   modality Modality @relation(fields: [modalityId], references: [id])
-  actor User @relation(fields: [graduatedBy], references: [id])
+  graduationLevel GraduationLevel? @relation(fields: [graduationLevelId], references: [id], onDelete: Restrict)
+  actor User @relation("GrantedGraduations", fields: [graduatedBy], references: [id])
+  correctedByUser User? @relation("CorrectedGraduations", fields: [correctedBy], references: [id])
+  cancelledByUser User? @relation("CancelledGraduations", fields: [cancelledBy], references: [id])
+  corrects Graduation? @relation("GraduationCorrections", fields: [correctsGraduationId], references: [id], onDelete: Restrict)
+  correctedVersion Graduation? @relation("GraduationCorrections")
   @@index([studentId, graduatedAt])
+  @@index([studentId, modalityId, status, graduatedAt])
+  @@index([graduationLevelId])
 }
 
 model Plan {
