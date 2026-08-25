@@ -61,6 +61,8 @@ model User {
   cancelledGraduations Graduation[] @relation("CancelledGraduations")
   auditLogs         AuditLog[]
   refundedPayments  Payment[] @relation("RefundedPayments")
+  recordedAttendances Attendance[] @relation("RecordedAttendances")
+  correctedAttendances Attendance[] @relation("CorrectedAttendances")
 }
 
 model AuthRateLimitBucket {
@@ -345,14 +347,22 @@ model Attendance {
   attendanceDate DateTime
   status         AttendanceStatus
   notes          String?
+  recordedBy     Int?
+  correctedBy    Int?
+  correctedAt    DateTime?
+  correctionReason String?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
   class   Class   @relation(fields: [classId], references: [id])
   student Student @relation(fields: [studentId], references: [id])
+  recordedByUser User? @relation("RecordedAttendances", fields: [recordedBy], references: [id], onDelete: Restrict)
+  correctedByUser User? @relation("CorrectedAttendances", fields: [correctedBy], references: [id], onDelete: Restrict)
 
   @@unique([classId, studentId, attendanceDate])
   @@index([classId, studentId, attendanceDate])
+  @@index([recordedBy])
+  @@index([correctedBy])
 }
 
 model StudentClass {

@@ -63,8 +63,8 @@ export class AttendanceController {
   @ApiParam({ name: 'id', description: 'ID do registro' })
   @ApiBody({ type: UpdateAttendanceDto })
   @ApiResponse({ status: 200, description: 'Registro atualizado com sucesso.' })
-  update(@Param('id') id: string, @Body() updateAttendanceDto: UpdateAttendanceDto) {
-    return this.attendanceService.update(Number(id), updateAttendanceDto);
+  update(@Param('id') id: string, @Body() updateAttendanceDto: UpdateAttendanceDto, @Request() req: any) {
+    return this.attendanceService.update(Number(id), updateAttendanceDto, req.user);
   }
 
   @Delete(':id')
