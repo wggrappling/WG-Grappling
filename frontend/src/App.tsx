@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
+import { useAuth } from './hooks';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { LoginPage } from './pages/LoginPage';
 import { StudentCentralPage } from './pages/StudentCentralPage';
@@ -11,11 +12,40 @@ import { AdminModalitiesPage } from './pages/AdminModalitiesPage';
 import { AdminClassesPage } from './pages/AdminClassesPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ReportsPage } from './pages/ReportsPage';
+import { StudentShell } from './components/self-service/StudentShell';
+import {
+  StudentAttendancePage,
+  StudentFinancePage,
+  StudentGraduationsPage,
+  StudentHomePage,
+  StudentModalitiesPage,
+  StudentProfilePage,
+  StudentUnavailablePage,
+} from './pages/StudentSelfServicePages';
+
+const internalRoles = ['OWNER', 'ADMIN', 'RECEPTION', 'TEACHER'] as const;
+
+function HomeRedirect() {
+  const { authenticated, initializing, user } = useAuth();
+  if (initializing) return <main className="auth-loading" aria-live="polite">Validando sessão...</main>;
+  if (!authenticated) return <Navigate to="/login" replace />;
+  return <Navigate to={user?.role === 'ALUNO' ? '/app' : '/dashboard'} replace />;
+}
 
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/app" element={<ProtectedRoute allowedRoles={['ALUNO']}><StudentShell /></ProtectedRoute>}>
+        <Route index element={<StudentHomePage />} />
+        <Route path="graduation" element={<StudentGraduationsPage />} />
+        <Route path="modalities" element={<StudentModalitiesPage />} />
+        <Route path="attendance" element={<StudentAttendancePage />} />
+        <Route path="finance" element={<StudentFinancePage />} />
+        <Route path="profile" element={<StudentProfilePage />} />
+        <Route path="shop" element={<StudentUnavailablePage kind="shop" />} />
+        <Route path="notices" element={<StudentUnavailablePage kind="notices" />} />
+      </Route>
       <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN', 'RECEPTION']}><DashboardPage /></ProtectedRoute>} />
       <Route path="/reports" element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN', 'RECEPTION']}><ReportsPage /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN']}><AdminHomePage /></ProtectedRoute>} />
@@ -25,7 +55,7 @@ function App() {
       <Route
         path="/students"
         element={(
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={internalRoles}>
             <StudentsPage />
           </ProtectedRoute>
         )}
@@ -45,13 +75,13 @@ function App() {
       <Route
         path="/students/:studentId"
         element={(
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={internalRoles}>
             <StudentCentralPage />
           </ProtectedRoute>
         )}
       />
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/students" replace />} />
+      <Route path="/" element={<HomeRedirect />} />
+      <Route path="*" element={<HomeRedirect />} />
     </Routes>
   );
 }

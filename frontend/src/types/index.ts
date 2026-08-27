@@ -11,3 +11,16 @@ export type { Charge, ChargePlan, ChargeStatus, ChargeType, CreatePayment, Payme
 export type { ClassOption, EnrollmentResponse, ModalityOption, NewStudentEnrollment, PlanOption } from './enrollment';
 export type { AdminClass, AdminModality, AdminPlan, SafeUser } from './admin';
 export type { BeltRank, Graduation, HistoryEventType, StudentHistoryEvent } from './history';
+export type {
+  AcademicCharge,
+  AcademicPayment,
+  AttendanceProjection,
+  FinanceProjection,
+  GraduationRecord,
+  GraduationsProjection,
+  MeProjection,
+  ModalitiesProjection,
+  ModalityMembership,
+  PlanMembership,
+  SelfProfile,
+} from './self-service';
