@@ -1,14 +1,18 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { StudentStatus, UserRole } from '../../../generated/prisma/enums';
+import { UserRole } from '../../../generated/prisma/enums';
 import { PrismaService } from '../../prisma/prisma.service';
 import type {
   AuthenticatedAccount,
   AuthenticatedUserContext,
 } from './authenticated-user-context';
+import { StudentAccessPolicy } from './student-access.policy';
 
 @Injectable()
 export class StudentContextResolver {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly accessPolicy: StudentAccessPolicy,
+  ) {}
 
   async resolve(account: AuthenticatedAccount): Promise<AuthenticatedUserContext> {
     if (!account?.active || account.role !== UserRole.ALUNO) {
@@ -28,16 +32,19 @@ export class StudentContextResolver {
     if (
       !user?.studentId ||
       !user.student ||
-      user.student.id !== user.studentId ||
-      user.student.status !== StudentStatus.ACTIVE
+      user.student.id !== user.studentId
     ) {
       throw new ForbiddenException('Contexto ALUNO não disponível.');
     }
+
+    const capabilities = this.accessPolicy.capabilitiesFor(user.student.status);
 
     return {
       userId: user.id,
       role: UserRole.ALUNO,
       studentId: user.studentId,
+      studentStatus: user.student.status,
+      capabilities,
     };
   }
 }

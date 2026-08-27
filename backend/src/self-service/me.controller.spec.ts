@@ -3,11 +3,19 @@ import { ROLES_KEY } from '../auth/roles.decorator';
 import { UserRole } from '../../generated/prisma/enums';
 import { MeController } from './me.controller';
 import { MeService } from './me.service';
+import { StudentStatus } from '../../generated/prisma/enums';
+import { SelfServiceCapability } from './context/student-access.policy';
 
 describe('MeController', () => {
   const service = { getMe: jest.fn(), getProfile: jest.fn() };
   const controller = new MeController(service as unknown as MeService);
-  const context = { userId: 1, role: UserRole.ALUNO, studentId: 2 } as const;
+  const context = {
+    userId: 1,
+    role: UserRole.ALUNO,
+    studentId: 2,
+    studentStatus: StudentStatus.ACTIVE,
+    capabilities: [SelfServiceCapability.READ, SelfServiceCapability.OPERATE],
+  } as const;
 
   beforeEach(() => jest.clearAllMocks());
 

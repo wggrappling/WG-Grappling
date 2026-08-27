@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { UserRole } from '../../generated/prisma/enums';
+import { StudentStatus, UserRole } from '../../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
 import type { AuthenticatedUserContext } from './context/authenticated-user-context';
 import type { MeProjectionDto } from './dto/me-projection.dto';
@@ -54,7 +54,9 @@ export class MeService {
         status: user.student.status,
         joinedAt: user.student.joinedAt,
       },
-      academicContext: { active: true },
+      academicContext: {
+        active: context.studentStatus === StudentStatus.ACTIVE,
+      },
     };
   }
 

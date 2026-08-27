@@ -2,6 +2,8 @@ import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { UserRole } from '../../../generated/prisma/enums';
 import { StudentContextGuard } from './student-context.guard';
 import { StudentContextResolver } from './student-context.resolver';
+import { StudentStatus } from '../../../generated/prisma/enums';
+import { SelfServiceCapability } from './student-access.policy';
 
 describe('StudentContextGuard', () => {
   const resolver = { resolve: jest.fn() };
@@ -15,7 +17,13 @@ describe('StudentContextGuard', () => {
 
   it('attaches the resolved context to the request once', async () => {
     const request: any = { user: { id: 3, role: UserRole.ALUNO, active: true } };
-    const authContext = { userId: 3, role: UserRole.ALUNO, studentId: 9 };
+    const authContext = {
+      userId: 3,
+      role: UserRole.ALUNO,
+      studentId: 9,
+      studentStatus: StudentStatus.ACTIVE,
+      capabilities: [SelfServiceCapability.READ, SelfServiceCapability.OPERATE],
+    };
     resolver.resolve.mockResolvedValue(authContext);
 
     await expect(guard.canActivate(executionContext(request))).resolves.toBe(true);
