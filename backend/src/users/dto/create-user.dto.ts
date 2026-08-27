@@ -14,6 +14,7 @@ export enum UserRole {
   ADMIN = 'ADMIN',
   RECEPTION = 'RECEPTION',
   TEACHER = 'TEACHER',
+  ALUNO = 'ALUNO',
 }
 
 export class CreateUserDto {
@@ -35,7 +36,7 @@ export class CreateUserDto {
   password: string;
 
   @IsEnum(UserRole, {
-    message: 'O cargo deve ser OWNER, ADMIN, RECEPTION ou TEACHER.',
+    message: 'O cargo deve ser OWNER, ADMIN, RECEPTION, TEACHER ou ALUNO.',
   })
   role: UserRole;
 

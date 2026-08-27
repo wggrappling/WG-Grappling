@@ -1,0 +1,15 @@
+BEGIN;
+
+ALTER TYPE "UserRole" ADD VALUE 'ALUNO';
+
+ALTER TABLE "User"
+ADD COLUMN "studentId" INTEGER;
+
+CREATE UNIQUE INDEX "User_studentId_key" ON "User"("studentId");
+
+ALTER TABLE "User"
+ADD CONSTRAINT "User_studentId_fkey"
+FOREIGN KEY ("studentId") REFERENCES "Student"("id")
+ON DELETE RESTRICT ON UPDATE CASCADE;
+
+COMMIT;

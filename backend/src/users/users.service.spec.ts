@@ -125,6 +125,32 @@ describe('UsersService security policy', () => {
     expect(await argon2.verify(stored, ownerDto.password.normalize('NFC'))).toBe(true);
   });
 
+  it('does not expose studentId in the administrative create response', async () => {
+    prisma.user.create.mockResolvedValue({
+      id: 10,
+      name: 'Aluno',
+      email: 'aluno@teste.local',
+      role: UserRole.ALUNO,
+      active: true,
+      createdAt: new Date(),
+      studentId: 55,
+    });
+
+    const result = await service.create({ ...ownerDto, role: UserRole.ALUNO }, owner);
+
+    expect(result.data).not.toHaveProperty('studentId');
+    expect(prisma.user.create).toHaveBeenCalledWith(expect.objectContaining({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        active: true,
+        createdAt: true,
+      },
+    }));
+  });
+
   it('uses compare-and-swap for automatic hash upgrades without session invalidation', async () => {
     prisma.user.updateMany.mockResolvedValue({ count: 0 });
     await expect(service.upgradePasswordHash(10, 'old-hash', 'new-hash')).resolves.toEqual({ count: 0 });

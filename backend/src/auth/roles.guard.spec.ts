@@ -50,6 +50,18 @@ describe('RolesGuard', () => {
     expect(() => guard.canActivate(context)).toThrow(UnauthorizedException);
   });
 
+  it('allows ALUNO only when the endpoint explicitly requires ALUNO', () => {
+    const context = {
+      switchToHttp: () => ({ getRequest: () => ({ user: { role: UserRole.ALUNO } }) }),
+      getHandler: () => ({}), getClass: () => ({}),
+    } as ExecutionContext;
+    reflector.get = jest.fn().mockReturnValue([UserRole.ALUNO]);
+    expect(guard.canActivate(context)).toBe(true);
+
+    reflector.get = jest.fn().mockReturnValue([UserRole.ADMIN]);
+    expect(() => guard.canActivate(context)).toThrow(ForbiddenException);
+  });
+
   it('requires the validated JWT secret when creating the JWT strategy', () => {
     const config = { getOrThrow: jest.fn(() => { throw new Error('JWT_SECRET missing'); }) };
     expect(() => new JwtStrategy({} as any, config as any)).toThrow('JWT_SECRET missing');

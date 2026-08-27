@@ -29,8 +29,15 @@ export class AuthService {
       }
     }
 
-    const { password: _password, ...safeUser } = user;
-    return safeUser;
+    return {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      active: user.active,
+      sessionVersion: user.sessionVersion,
+      createdAt: user.createdAt,
+    };
   }
 
   async login(user: any) {
@@ -41,7 +48,14 @@ export class AuthService {
       sessionVersion: user.sessionVersion,
     };
     const access_token = this.jwtService.sign(payload);
-    const { sessionVersion: _sessionVersion, ...publicUser } = user;
+    const publicUser = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      active: user.active,
+      createdAt: user.createdAt,
+    };
 
     return {
       access_token,

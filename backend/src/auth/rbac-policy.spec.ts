@@ -10,6 +10,7 @@ import { ModalityController } from '../modality/modality.controller';
 import { ClassController } from '../class/class.controller';
 import { AttendanceController } from '../attendance/attendance.controller';
 import { GraduationController } from '../graduation/graduation.controller';
+import { MeController } from '../self-service/me.controller';
 
 describe('RBAC endpoint policy', () => {
   const rolesFor = (target: object, method?: string) => Reflect.getMetadata(ROLES_KEY, method ? (target as any)[method] : target);
@@ -34,6 +35,11 @@ describe('RBAC endpoint policy', () => {
 
   it('restricts all user administration to owner and admin', () => {
     expect(rolesFor(UsersController)).toEqual([UserRole.OWNER, UserRole.ADMIN]);
+    expect(rolesFor(UsersController)).not.toContain(UserRole.ALUNO);
+  });
+
+  it('keeps /me exclusive to the explicit ALUNO context', () => {
+    expect(rolesFor(MeController)).toEqual([UserRole.ALUNO]);
   });
 
   it.each([

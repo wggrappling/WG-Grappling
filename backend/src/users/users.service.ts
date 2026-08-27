@@ -41,12 +41,26 @@ export class UsersService {
         ...createUserDto,
         password: passwordHash,
       },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        active: true,
+        createdAt: true,
+      },
     });
 
-    const { password, ...safeUser } = user;
     return {
       message: 'Usuário cadastrado com sucesso!',
-      data: safeUser,
+      data: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        active: user.active,
+        createdAt: user.createdAt,
+      },
     };
   }
 

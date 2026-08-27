@@ -47,4 +47,21 @@ describe('JwtStrategy session validation', () => {
     users.findForAuthentication.mockResolvedValue({ ...currentUser, role: UserRole.RECEPTION, sessionVersion: 5 });
     await expect(strategy.validate(newPayload)).resolves.toEqual(expect.objectContaining({ role: UserRole.RECEPTION }));
   });
+
+  it('authenticates an active ALUNO without adding studentId to the JWT authority', async () => {
+    const alunoPayload = { sub: 2, email: 'aluno@teste.local', role: UserRole.ALUNO, sessionVersion: 1 };
+    users.findForAuthentication.mockResolvedValue({
+      ...currentUser,
+      id: 2,
+      email: alunoPayload.email,
+      role: UserRole.ALUNO,
+      sessionVersion: 1,
+    });
+
+    const result = await strategy.validate(alunoPayload);
+
+    expect(result).toEqual(expect.objectContaining({ id: 2, role: UserRole.ALUNO }));
+    expect(alunoPayload).not.toHaveProperty('studentId');
+    expect(result).not.toHaveProperty('studentId');
+  });
 });

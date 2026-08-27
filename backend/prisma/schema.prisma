@@ -13,6 +13,7 @@ enum UserRole {
   ADMIN
   RECEPTION
   TEACHER
+  ALUNO
 }
 
 model Person {
@@ -52,8 +53,10 @@ model User {
   role      UserRole
   active    Boolean   @default(true)
   sessionVersion Int  @default(0)
+  studentId Int?      @unique
   createdAt DateTime  @default(now())
 
+  student          Student? @relation("StudentUser", fields: [studentId], references: [id], onDelete: Restrict)
   classes          Class[]
   uploadedDocuments Document[] @relation("UploadedDocuments")
   graduations       Graduation[] @relation("GrantedGraduations")
@@ -149,6 +152,7 @@ model Student {
   responsibles   StudentResponsible[]
   documents      Document[]
   graduations    Graduation[]
+  user           User?                 @relation("StudentUser")
   person         Person              @relation(fields: [personId], references: [id])
 }
 
