@@ -7,9 +7,10 @@ import { MeController } from './me.controller';
 import { MeService } from './me.service';
 import { SelfAcademicService } from './self-academic.service';
 import { SelfStoreService } from './self-store.service';
+import { StoreModule } from '../store/store.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, StoreModule],
   controllers: [MeController],
   providers: [
     MeService,

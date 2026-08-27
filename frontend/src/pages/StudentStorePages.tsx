@@ -53,6 +53,7 @@ export function StudentStorePage() {
           ? <section className="student-state"><p>{search ? 'Nenhum produto corresponde à busca.' : 'Nenhum produto disponível no momento.'}</p></section>
           : <section className="student-product-grid" aria-label="Produtos disponíveis">
             {products.map((product) => <article className="student-product-card" key={product.id}>
+              {product.imageUrl && <img src={product.imageUrl} alt={`Foto de ${product.name}`} />}
               <div><h2>{product.name}</h2><p>{product.description}</p></div>
               <strong>{currency.format(product.price)}</strong>
               <span className={product.available ? 'student-pill student-pill-active' : 'student-pill'}>{product.available ? 'Disponível' : 'Indisponível'}</span>
@@ -68,6 +69,7 @@ export function StudentProductPage() {
   const productId = Number(useParams().productId);
   const [message, setMessage] = useState('');
   const [failed, setFailed] = useState(false);
+  const [variantId, setVariantId] = useState('');
   const load = useCallback(async () => {
     const [me, product] = await Promise.all([selfService.me(), selfService.storeProduct(productId)]);
     return { me, product };
@@ -77,7 +79,9 @@ export function StudentProductPage() {
   const add = async () => {
     setMessage('');
     try {
-      await selfService.addCartItem(productId, 1);
+      const selected = Number(variantId || resource.data?.product.variants.find((variant) => variant.available)?.id);
+      if (!selected) throw new Error('Selecione uma variação disponível.');
+      await selfService.addCartItem(productId, selected, 1);
       setFailed(false);
       setMessage('Produto adicionado ao carrinho.');
     } catch (error) {
@@ -93,9 +97,12 @@ export function StudentProductPage() {
       {resource.data && <section className="student-card student-product-detail">
         {paused && <PausedStoreNotice />}
         <h2>{resource.data.product.name}</h2>
+        {resource.data.product.imageUrl && <img src={resource.data.product.imageUrl} alt={`Foto de ${resource.data.product.name}`} />}
         <p>{resource.data.product.description}</p>
         <strong className="student-product-price">{currency.format(resource.data.product.price)}</strong>
         <span className={resource.data.product.available ? 'student-pill student-pill-active' : 'student-pill'}>{resource.data.product.available ? 'Disponível' : 'Indisponível'}</span>
+        {resource.data.product.madeToOrder && <p>Sob encomenda · prazo de até {resource.data.product.leadTimeDays} dias.</p>}
+        <label>Variação<select aria-label="Variação" value={variantId} onChange={(event) => setVariantId(event.target.value)}><option value="">Selecione</option>{resource.data.product.variants.map((variant) => <option key={variant.id} value={variant.id} disabled={!variant.available}>{[variant.color, variant.size].filter(Boolean).join(' · ') || 'Padrão'}{!variant.available ? ' — indisponível' : ''}</option>)}</select></label>
         {!paused && resource.data.product.available && <button type="button" onClick={() => void add()}>Adicionar ao carrinho</button>}
         <MutationMessage message={message} error={failed} />
       </section>}
@@ -110,6 +117,7 @@ export function StudentCartPage() {
   }, []);
   const resource = useSelfServiceResource(load, [load]);
   const [message, setMessage] = useState('');
+  const [method, setMethod] = useState<'PIX_QR_CODE' | 'CREDIT_CARD_LINK' | 'CREDIT_CARD_PHYSICAL' | 'PIX_MANUAL'>('PIX_MANUAL');
   const paused = resource.data?.me.student.status === 'PAUSED';
   const mutate = async (operation: () => Promise<unknown>) => {
     setMessage('');
@@ -135,7 +143,7 @@ export function StudentCartPage() {
         <MutationMessage message={message} error />
         <section className="student-list student-cart-list">
           {resource.data.cart.items.map((item) => <article key={item.id}>
-            <div><strong>{item.product.name}</strong><small>{currency.format(item.unitPrice)} por unidade · Subtotal {currency.format(item.subtotal)}</small>{!item.available && <small className="student-action-error">Quantidade indisponível no momento.</small>}</div>
+            <div><strong>{item.product.name}</strong><small>{[item.variant.color, item.variant.size].filter(Boolean).join(' · ') || 'Padrão'} · {currency.format(item.unitPrice)} por unidade · Subtotal {currency.format(item.subtotal)}</small>{!item.available && <small className="student-action-error">Quantidade indisponível no momento.</small>}</div>
             {paused
               ? <span>Qtd. {item.quantity}</span>
               : <form onSubmit={(event) => update(event, item.id)} className="student-cart-actions">
@@ -145,7 +153,7 @@ export function StudentCartPage() {
               </form>}
           </article>)}
         </section>
-        <section className="student-card student-cart-total"><span>Total atual</span><strong>{currency.format(resource.data.cart.total)}</strong><p>Checkout e pagamento ainda não estão disponíveis. Nenhum pedido ou cobrança será criado.</p></section>
+        <section className="student-card student-cart-total"><span>Total atual</span><strong>{currency.format(resource.data.cart.total)}</strong>{!paused && <><label>Forma de pagamento<select value={method} onChange={(event) => setMethod(event.target.value as typeof method)}><option value="PIX_MANUAL">Pix manual</option><option value="CREDIT_CARD_PHYSICAL">Cartão físico</option><option value="PIX_QR_CODE">Pix QR Code</option><option value="CREDIT_CARD_LINK">Link de cartão</option></select></label><button type="button" disabled={resource.data.cart.items.some((item) => !item.available)} onClick={() => void mutate(() => selfService.checkout(method, resource.data!.cart.total))}>Criar pedido</button></>}<p>Pagamentos eletrônicos dependem de confirmação real. Pagamentos manuais passam por análise da academia.</p></section>
       </>}
     </ResourceState>
   </>;
@@ -158,7 +166,7 @@ export function StudentOrdersPage() {
     <StoreHeader title="Pedidos" description="Acompanhe somente os seus pedidos comerciais." />
     <StoreLinks />
     <ResourceState {...resource} empty={Boolean(resource.data && resource.data.length === 0)} emptyMessage="Você ainda não possui pedidos." onRetry={() => void resource.refresh()}>
-      {resource.data && <section className="student-list">{resource.data.map((order) => <article key={order.id}><div><strong>Pedido #{order.id}</strong><small>{date.format(new Date(order.createdAt))} · {order.itemCount} item(ns)</small></div><div><strong>{currency.format(order.total)}</strong><Link to={`/app/shop/orders/${order.id}`}>Detalhes</Link></div></article>)}</section>}
+      {resource.data && <section className="student-list">{resource.data.map((order) => <article key={order.id}><div><strong>Pedido #{order.id}</strong><small>{date.format(new Date(order.createdAt))} · {order.itemCount} item(ns) · Saldo {currency.format(order.balance)}</small></div><div><strong>{currency.format(order.total)}</strong><Link to={`/app/shop/orders/${order.id}`}>Detalhes</Link></div></article>)}</section>}
     </ResourceState>
   </>;
 }
@@ -172,7 +180,7 @@ export function StudentOrderPage() {
     <StoreLinks />
     <ResourceState {...resource} onRetry={() => void resource.refresh()}>
       {resource.data && <div className="student-grid">
-        <section className="student-card"><h2>Pedido #{resource.data.id}</h2><p>{date.format(new Date(resource.data.createdAt))}</p><span className="student-pill student-pill-paused">Aguardando pagamento</span></section>
+        <section className="student-card"><h2>Pedido #{resource.data.id}</h2><p>{date.format(new Date(resource.data.createdAt))}</p><span className="student-pill student-pill-paused">{resource.data.status.replace(/_/g, ' ')}</span><p>Pago: {currency.format(resource.data.paid)} · Pendente: {currency.format(resource.data.balance)}</p></section>
         <section className="student-list">{resource.data.items.map((item) => <article key={item.id}><div><strong>{item.productName}</strong><small>{item.quantity} × {currency.format(item.unitPrice)}</small></div><strong>{currency.format(item.subtotal)}</strong></article>)}</section>
         <section className="student-card student-cart-total"><span>Total registrado</span><strong>{currency.format(resource.data.total)}</strong></section>
       </div>}

@@ -82,12 +82,14 @@
 .student-store-links { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
 .student-store-links a { background: var(--student-surface); border: 1px solid var(--student-border); border-radius: 999px; color: var(--student-text); min-height: 2.75rem; padding: .7rem 1rem; text-decoration: none; }
 .student-store-search { color: var(--student-muted); display: grid; font-size: .8rem; gap: .35rem; margin-bottom: 1rem; max-width: 32rem; }
-.student-store-search input, .student-cart-actions input { background: var(--student-surface); border: 1px solid var(--student-border); border-radius: .75rem; color: var(--student-text); min-height: 2.75rem; padding: .55rem .7rem; }
+.student-store-search input, .student-cart-actions input, .student-product-detail select, .student-cart-total select { background: var(--student-surface); border: 1px solid var(--student-border); border-radius: .75rem; color: var(--student-text); min-height: 2.75rem; padding: .55rem .7rem; }
 .student-product-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
 .student-product-card { background: var(--student-surface); border: 1px solid var(--student-border); border-radius: 1rem; box-shadow: var(--student-shadow); display: grid; gap: .75rem; padding: 1rem; }
 .student-product-card h2 { font-size: 1.1rem; margin: 0; }
+.student-product-card img, .student-product-detail img { aspect-ratio: 4 / 3; border-radius: .75rem; max-height: 20rem; object-fit: cover; width: 100%; }
 .student-product-card p { color: var(--student-muted); }
-.student-product-card a, .student-product-detail button, .student-cart-actions button { background: var(--student-accent); border: 0; border-radius: .75rem; color: white; cursor: pointer; min-height: 2.75rem; padding: .7rem 1rem; text-align: center; text-decoration: none; }
+.student-product-card a, .student-product-detail button, .student-cart-actions button, .student-cart-total button { background: var(--student-accent); border: 0; border-radius: .75rem; color: white; cursor: pointer; min-height: 2.75rem; padding: .7rem 1rem; text-align: center; text-decoration: none; }
+.student-product-detail label, .student-cart-total label { display: grid; gap: .35rem; }
 .student-product-detail { display: grid; gap: 1rem; max-width: 42rem; }
 .student-product-detail h2, .student-product-detail p { margin: 0; }
 .student-product-price { font-size: 1.5rem; }

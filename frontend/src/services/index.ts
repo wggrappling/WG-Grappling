@@ -12,3 +12,4 @@ export { historyService } from './history.service';
 export { dashboardService } from './dashboard.service';
 export { reportsService } from './reports.service';
 export { selfService } from './self-service.service';
+export { storeOperations } from './store-operations.service';

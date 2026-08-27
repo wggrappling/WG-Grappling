@@ -9,8 +9,11 @@ import {
   Patch,
   Post,
   Query,
+  Res,
+  StreamableFile,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { UserRole } from '../../generated/prisma/enums';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -31,6 +34,8 @@ import {
 } from './dto/self-academic-projections.dto';
 import { SelfAttendanceQueryDto } from './dto/self-attendance-query.dto';
 import { AddCartItemDto, UpdateCartItemDto } from './dto/self-store.dto';
+import { SelfCheckoutDto } from '../store/dto/store.dto';
+import { StoreService } from '../store/store.service';
 import { SelfStoreService } from './self-store.service';
 import {
   SelfServiceCapability,
@@ -48,6 +53,7 @@ export class MeController {
     private readonly academicService: SelfAcademicService,
     private readonly storeService: SelfStoreService,
     private readonly accessPolicy: StudentAccessPolicy,
+    private readonly operations: StoreService,
   ) {}
 
   @Get()
@@ -99,6 +105,14 @@ export class MeController {
     return this.storeService.getProduct(productId);
   }
 
+  @Get('store/products/:id/image')
+  async getStoreProductImage(@Param('id', ParseIntPipe) productId: number, @Res({ passthrough: true }) response: Response) {
+    const image = await this.operations.getProductImage(productId);
+    response.setHeader('Content-Type', image.mimeType);
+    response.setHeader('Content-Length', String(image.data.length));
+    return new StreamableFile(image.data);
+  }
+
   @Get('cart')
   getCart(@AuthenticatedContext() context: AuthenticatedUserContext) {
     return this.storeService.getCart(context);
@@ -110,7 +124,7 @@ export class MeController {
     @Body() dto: AddCartItemDto,
   ) {
     this.accessPolicy.assertCapability(context, SelfServiceCapability.OPERATE);
-    return this.storeService.addCartItem(context, dto.productId, dto.quantity);
+    return this.storeService.addCartItem(context, dto.productId, dto.variantId, dto.quantity);
   }
 
   @Patch('cart/items/:id')
@@ -136,6 +150,12 @@ export class MeController {
   @Get('orders')
   getOrders(@AuthenticatedContext() context: AuthenticatedUserContext) {
     return this.storeService.getOrders(context);
+  }
+
+  @Post('orders')
+  createOrder(@AuthenticatedContext() context: AuthenticatedUserContext, @Body() dto: SelfCheckoutDto) {
+    this.accessPolicy.assertCapability(context, SelfServiceCapability.OPERATE);
+    return this.operations.createSelfOrder(context.studentId, dto, { id: context.userId, role: context.role });
   }
 
   @Get('orders/:id')

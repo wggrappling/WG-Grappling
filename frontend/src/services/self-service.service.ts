@@ -25,11 +25,13 @@ export const selfService = {
   storeProducts: () => httpService.get<StoreProduct[]>('/me/store/products'),
   storeProduct: (productId: number) => httpService.get<StoreProduct>(`/me/store/products/${productId}`),
   cart: () => httpService.get<StoreCart>('/me/cart'),
-  addCartItem: (productId: number, quantity: number) =>
-    httpService.post<StoreCart, { productId: number; quantity: number }>('/me/cart/items', { productId, quantity }),
+  addCartItem: (productId: number, variantId: number, quantity: number) =>
+    httpService.post<StoreCart, { productId: number; variantId: number; quantity: number }>('/me/cart/items', { productId, variantId, quantity }),
   updateCartItem: (itemId: number, quantity: number) =>
     httpService.patch<StoreCart, { quantity: number }>(`/me/cart/items/${itemId}`, { quantity }),
   removeCartItem: (itemId: number) => httpService.remove<StoreCart>(`/me/cart/items/${itemId}`),
   orders: () => httpService.get<StoreOrderSummary[]>('/me/orders'),
   order: (orderId: number) => httpService.get<StoreOrder>(`/me/orders/${orderId}`),
+  checkout: (paymentMethod: 'PIX_QR_CODE' | 'CREDIT_CARD_LINK' | 'CREDIT_CARD_PHYSICAL' | 'PIX_MANUAL', paymentAmount: number) =>
+    httpService.post<{ id: number; total: number; status: string }, { paymentMethod: string; paymentAmount: number }>('/me/orders', { paymentMethod, paymentAmount }),
 };

@@ -1,0 +1,9 @@
+.store-operations { display: grid; gap: 1rem; }
+.store-operations .student-card { box-shadow: none; }
+.store-operations .inline-form { align-items: end; display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .5rem; }
+.store-operations .inline-form label { display: grid; gap: .25rem; }
+.store-operations input, .store-operations select, .store-operations textarea { border: 1px solid #cbd5da; border-radius: .55rem; min-height: 2.6rem; padding: .5rem; }
+.store-operations textarea { min-height: 5rem; }
+.store-operations button { min-height: 2.65rem; }
+.store-operations .student-list article { align-items: flex-start; }
+@media (max-width: 700px) { .store-operations .inline-form { align-items: stretch; flex-direction: column; } }

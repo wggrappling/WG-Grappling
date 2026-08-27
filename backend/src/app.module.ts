@@ -26,6 +26,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { ReportsModule } from './reports/reports.module';
 import { SelfServiceModule } from './self-service/self-service.module';
+import { StoreModule } from './store/store.module';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { SelfServiceModule } from './self-service/self-service.module';
     DashboardModule,
     ReportsModule,
     SelfServiceModule,
+    StoreModule,
   ],
   controllers: [AppController],
   providers: [AppService],

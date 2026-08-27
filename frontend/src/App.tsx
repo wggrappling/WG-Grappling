@@ -12,6 +12,7 @@ import { AdminModalitiesPage } from './pages/AdminModalitiesPage';
 import { AdminClassesPage } from './pages/AdminClassesPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ReportsPage } from './pages/ReportsPage';
+import { StoreOperationsPage } from './pages/StoreOperationsPage';
 import { StudentShell } from './components/self-service/StudentShell';
 import {
   StudentAttendancePage,
@@ -59,6 +60,7 @@ function App() {
       </Route>
       <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN', 'RECEPTION']}><DashboardPage /></ProtectedRoute>} />
       <Route path="/reports" element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN', 'RECEPTION']}><ReportsPage /></ProtectedRoute>} />
+      <Route path="/store-operations" element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN', 'RECEPTION']}><StoreOperationsPage /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN']}><AdminHomePage /></ProtectedRoute>} />
       <Route path="/admin/plans" element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN']}><AdminPlansPage /></ProtectedRoute>} />
       <Route path="/admin/modalities" element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN']}><AdminModalitiesPage /></ProtectedRoute>} />

@@ -9,5 +9,6 @@ import { StorageService } from './storage/storage.service';
   imports: [PrismaModule],
   controllers: [DocumentsController],
   providers: [DocumentsService, LocalStorageAdapter, { provide: StorageService, useExisting: LocalStorageAdapter }],
+  exports: [StorageService],
 })
 export class DocumentsModule {}

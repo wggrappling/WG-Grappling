@@ -9,7 +9,7 @@ vi.mock('../services', () => ({
   selfService: {
     me: vi.fn(), storeProducts: vi.fn(), storeProduct: vi.fn(), cart: vi.fn(),
     addCartItem: vi.fn(), updateCartItem: vi.fn(), removeCartItem: vi.fn(),
-    orders: vi.fn(), order: vi.fn(),
+    orders: vi.fn(), order: vi.fn(), checkout: vi.fn(),
   },
 }));
 
@@ -19,6 +19,7 @@ const me = (status: 'ACTIVE' | 'PAUSED' = 'ACTIVE') => ({
   student: { id: 44, name: 'Ana', enrollmentNumber: 'WG-44', status, joinedAt: '2026-01-01' },
   academicContext: { active: status === 'ACTIVE' },
 });
+const product = { id: 3, name: 'Kimono', description: 'Trançado', type: 'SET' as const, price: 399.9, available: true, madeToOrder: false, leadTimeDays: 7, imageUrl: null, variants: [{ id: 11, color: 'Preto', size: 'M', available: true }] };
 const renderAt = (path: string, element: React.ReactNode, routePath = '*') => render(<MemoryRouter initialEntries={[path]}><Routes><Route path={routePath} element={element} /></Routes></MemoryRouter>);
 
 describe('student store pages', () => {
@@ -26,7 +27,7 @@ describe('student store pages', () => {
 
   it('renders loading and a real catalog without exposing stock quantity', async () => {
     mocked.me.mockResolvedValue(me());
-    mocked.storeProducts.mockResolvedValue([{ id: 3, name: 'Kimono', description: 'Trançado', price: 399.9, available: true }]);
+    mocked.storeProducts.mockResolvedValue([product]);
     renderAt('/app/shop', <StudentStorePage />);
     expect(screen.getByText('Carregando suas informações...')).toBeInTheDocument();
     expect(await screen.findByText('Kimono')).toBeInTheDocument();
@@ -36,7 +37,7 @@ describe('student store pages', () => {
 
   it('supports catalog search and empty results', async () => {
     mocked.me.mockResolvedValue(me());
-    mocked.storeProducts.mockResolvedValue([{ id: 3, name: 'Kimono', description: 'Trançado', price: 399.9, available: true }]);
+    mocked.storeProducts.mockResolvedValue([product]);
     renderAt('/app/shop', <StudentStorePage />);
     await screen.findByText('Kimono');
     fireEvent.change(screen.getByLabelText('Buscar produtos'), { target: { value: 'faixa' } });
@@ -45,17 +46,19 @@ describe('student store pages', () => {
 
   it('allows ACTIVE to add a product without sending price or studentId', async () => {
     mocked.me.mockResolvedValue(me('ACTIVE'));
-    mocked.storeProduct.mockResolvedValue({ id: 3, name: 'Kimono', description: 'Trançado', price: 399.9, available: true });
+    mocked.storeProduct.mockResolvedValue(product);
     mocked.addCartItem.mockResolvedValue({ items: [], subtotal: 0, total: 0 });
     renderAt('/app/shop/products/3', <StudentProductPage />, '/app/shop/products/:productId');
-    fireEvent.click(await screen.findByRole('button', { name: 'Adicionar ao carrinho' }));
-    await waitFor(() => expect(mocked.addCartItem).toHaveBeenCalledWith(3, 1));
+    await screen.findByRole('button', { name: 'Adicionar ao carrinho' });
+    fireEvent.change(screen.getByLabelText('Variação'), { target: { value: '11' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Adicionar ao carrinho' }));
+    await waitFor(() => expect(mocked.addCartItem).toHaveBeenCalledWith(3, 11, 1));
     expect(await screen.findByText('Produto adicionado ao carrinho.')).toBeInTheDocument();
   });
 
   it('shows catalog to PAUSED but hides every purchase action', async () => {
     mocked.me.mockResolvedValue(me('PAUSED'));
-    mocked.storeProduct.mockResolvedValue({ id: 3, name: 'Kimono', description: 'Trançado', price: 399.9, available: true });
+    mocked.storeProduct.mockResolvedValue(product);
     renderAt('/app/shop/products/3', <StudentProductPage />, '/app/shop/products/:productId');
     expect(await screen.findByText('Loja em modo de consulta')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Adicionar ao carrinho' })).not.toBeInTheDocument();
@@ -63,7 +66,7 @@ describe('student store pages', () => {
 
   it('renders server-calculated cart totals and updates only quantity', async () => {
     mocked.me.mockResolvedValue(me());
-    mocked.cart.mockResolvedValue({ items: [{ id: 9, quantity: 2, unitPrice: 50, subtotal: 100, available: true, product: { id: 3, name: 'Faixa', description: 'Azul' } }], subtotal: 100, total: 100 });
+    mocked.cart.mockResolvedValue({ items: [{ id: 9, quantity: 2, unitPrice: 50, subtotal: 100, available: true, product: { id: 3, name: 'Faixa', description: 'Azul' }, variant: { id: 11, color: 'Azul', size: 'M' } }], subtotal: 100, total: 100 });
     mocked.updateCartItem.mockResolvedValue({ items: [], subtotal: 0, total: 0 });
     renderAt('/app/shop/cart', <StudentCartPage />);
     expect(await screen.findByText('R$ 100,00')).toBeInTheDocument();
@@ -73,7 +76,7 @@ describe('student store pages', () => {
   });
 
   it('renders own orders and no checkout or payment action', async () => {
-    mocked.orders.mockResolvedValue([{ id: 12, subtotal: 80, total: 80, status: 'PENDING_PAYMENT', createdAt: '2026-08-27', itemCount: 1 }]);
+    mocked.orders.mockResolvedValue([{ id: 12, subtotal: 80, total: 80, paid: 0, balance: 80, status: 'PENDING_PAYMENT', createdAt: '2026-08-27', itemCount: 1 }]);
     renderAt('/app/shop/orders', <StudentOrdersPage />);
     expect(await screen.findByText('Pedido #12')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /pagar|checkout|finalizar/i })).not.toBeInTheDocument();

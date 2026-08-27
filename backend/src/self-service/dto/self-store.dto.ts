@@ -9,6 +9,12 @@ export class AddCartItemDto {
   @Min(1)
   productId: number;
 
+  @ApiProperty({ example: 21 })
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  variantId: number;
+
   @ApiProperty({ example: 1, minimum: 1 })
   @Type(() => Number)
   @IsInt()

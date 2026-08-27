@@ -8,6 +8,7 @@ import { SelfServiceCapability } from './context/student-access.policy';
 import { SelfAcademicService } from './self-academic.service';
 import { SelfStoreService } from './self-store.service';
 import { StudentAccessPolicy } from './context/student-access.policy';
+import { StoreService } from '../store/store.service';
 
 describe('MeController', () => {
   const service = { getMe: jest.fn(), getProfile: jest.fn() };
@@ -23,11 +24,13 @@ describe('MeController', () => {
     getOrders: jest.fn(), getOrder: jest.fn(),
   };
   const policy = { assertCapability: jest.fn() };
+  const operations = { createSelfOrder: jest.fn(), getProductImage: jest.fn() };
   const controller = new MeController(
     service as unknown as MeService,
     academic as unknown as SelfAcademicService,
     store as unknown as SelfStoreService,
     policy as unknown as StudentAccessPolicy,
+    operations as unknown as StoreService,
   );
   const context = {
     userId: 1,
@@ -83,10 +86,10 @@ describe('MeController', () => {
   });
 
   it('requires operational capability before a cart mutation', async () => {
-    const dto = { productId: 9, quantity: 2 };
+    const dto = { productId: 9, variantId: 21, quantity: 2 };
     store.addCartItem.mockResolvedValue({ items: [] });
     await controller.addCartItem(context, dto);
     expect(policy.assertCapability).toHaveBeenCalledWith(context, SelfServiceCapability.OPERATE);
-    expect(store.addCartItem).toHaveBeenCalledWith(context, 9, 2);
+    expect(store.addCartItem).toHaveBeenCalledWith(context, 9, 21, 2);
   });
 });
