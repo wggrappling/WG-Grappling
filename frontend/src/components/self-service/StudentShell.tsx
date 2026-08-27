@@ -22,7 +22,7 @@ export function StudentShell() {
           <span><strong>WG Grappling</strong><small>Área do aluno</small></span>
         </NavLink>
         <div className="student-header-actions">
-          <NavLink to="/app/shop" className="student-shop-link">Loja <span>Em breve</span></NavLink>
+          <NavLink to="/app/shop" className="student-shop-link">Loja <span>Catálogo</span></NavLink>
           <button type="button" className="student-logout" onClick={() => { logout(); navigate('/login', { replace: true }); }}>
             Sair
           </button>

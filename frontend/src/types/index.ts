@@ -8,6 +8,7 @@ export type {
   StudentDocument,
 } from './document';
 export type { Charge, ChargePlan, ChargeStatus, ChargeType, CreatePayment, Payment, PaymentMethod, RefundPayment } from './charge';
+export type { CartItem, StoreCart, StoreOrder, StoreOrderSummary, StoreProduct } from './store';
 export type { ClassOption, EnrollmentResponse, ModalityOption, NewStudentEnrollment, PlanOption } from './enrollment';
 export type { AdminClass, AdminModality, AdminPlan, SafeUser } from './admin';
 export type { BeltRank, Graduation, HistoryEventType, StudentHistoryEvent } from './history';

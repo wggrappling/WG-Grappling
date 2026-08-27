@@ -17,7 +17,7 @@ describe('StudentShell', () => {
   it('offers the approved navigation and keeps Shop as a secondary destination', () => {
     render(<AuthContext.Provider value={value()}><MemoryRouter initialEntries={['/app']}><Routes><Route path="/app" element={<StudentShell />}><Route index element={<p>Conteúdo</p>} /></Route></Routes></MemoryRouter></AuthContext.Provider>);
     expect(screen.getByRole('navigation', { name: 'Navegação principal do aluno' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Loja Em breve/ })).toHaveAttribute('href', '/app/shop');
+    expect(screen.getByRole('link', { name: /Loja Catálogo/ })).toHaveAttribute('href', '/app/shop');
     expect(screen.getAllByRole('link')).toHaveLength(7);
   });
 

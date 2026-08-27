@@ -6,6 +6,7 @@ import { StudentAccessPolicy } from './context/student-access.policy';
 import { MeController } from './me.controller';
 import { MeService } from './me.service';
 import { SelfAcademicService } from './self-academic.service';
+import { SelfStoreService } from './self-store.service';
 
 @Module({
   imports: [PrismaModule],
@@ -13,6 +14,7 @@ import { SelfAcademicService } from './self-academic.service';
   providers: [
     MeService,
     SelfAcademicService,
+    SelfStoreService,
     StudentAccessPolicy,
     StudentContextResolver,
     StudentContextGuard,

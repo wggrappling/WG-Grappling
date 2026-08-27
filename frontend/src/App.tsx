@@ -22,6 +22,13 @@ import {
   StudentProfilePage,
   StudentUnavailablePage,
 } from './pages/StudentSelfServicePages';
+import {
+  StudentCartPage,
+  StudentOrderPage,
+  StudentOrdersPage,
+  StudentProductPage,
+  StudentStorePage,
+} from './pages/StudentStorePages';
 
 const internalRoles = ['OWNER', 'ADMIN', 'RECEPTION', 'TEACHER'] as const;
 
@@ -43,7 +50,11 @@ function App() {
         <Route path="attendance" element={<StudentAttendancePage />} />
         <Route path="finance" element={<StudentFinancePage />} />
         <Route path="profile" element={<StudentProfilePage />} />
-        <Route path="shop" element={<StudentUnavailablePage kind="shop" />} />
+        <Route path="shop" element={<StudentStorePage />} />
+        <Route path="shop/products/:productId" element={<StudentProductPage />} />
+        <Route path="shop/cart" element={<StudentCartPage />} />
+        <Route path="shop/orders" element={<StudentOrdersPage />} />
+        <Route path="shop/orders/:orderId" element={<StudentOrderPage />} />
         <Route path="notices" element={<StudentUnavailablePage kind="notices" />} />
       </Route>
       <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN', 'RECEPTION']}><DashboardPage /></ProtectedRoute>} />

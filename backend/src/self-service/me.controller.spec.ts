@@ -6,6 +6,8 @@ import { MeService } from './me.service';
 import { StudentStatus } from '../../generated/prisma/enums';
 import { SelfServiceCapability } from './context/student-access.policy';
 import { SelfAcademicService } from './self-academic.service';
+import { SelfStoreService } from './self-store.service';
+import { StudentAccessPolicy } from './context/student-access.policy';
 
 describe('MeController', () => {
   const service = { getMe: jest.fn(), getProfile: jest.fn() };
@@ -15,9 +17,17 @@ describe('MeController', () => {
     getAttendance: jest.fn(),
     getFinance: jest.fn(),
   };
+  const store = {
+    getProducts: jest.fn(), getProduct: jest.fn(), getCart: jest.fn(),
+    addCartItem: jest.fn(), updateCartItem: jest.fn(), removeCartItem: jest.fn(),
+    getOrders: jest.fn(), getOrder: jest.fn(),
+  };
+  const policy = { assertCapability: jest.fn() };
   const controller = new MeController(
     service as unknown as MeService,
     academic as unknown as SelfAcademicService,
+    store as unknown as SelfStoreService,
+    policy as unknown as StudentAccessPolicy,
   );
   const context = {
     userId: 1,
@@ -61,5 +71,22 @@ describe('MeController', () => {
     academic.getAttendance.mockResolvedValue({ records: [] });
     await controller.getAttendance(context, query);
     expect(academic.getAttendance).toHaveBeenCalledWith(context, query);
+  });
+
+  it('never accepts studentId for store reads', async () => {
+    store.getCart.mockResolvedValue({ items: [] });
+    store.getOrders.mockResolvedValue([]);
+    await controller.getCart(context);
+    await controller.getOrders(context);
+    expect(store.getCart).toHaveBeenCalledWith(context);
+    expect(store.getOrders).toHaveBeenCalledWith(context);
+  });
+
+  it('requires operational capability before a cart mutation', async () => {
+    const dto = { productId: 9, quantity: 2 };
+    store.addCartItem.mockResolvedValue({ items: [] });
+    await controller.addCartItem(context, dto);
+    expect(policy.assertCapability).toHaveBeenCalledWith(context, SelfServiceCapability.OPERATE);
+    expect(store.addCartItem).toHaveBeenCalledWith(context, 9, 2);
   });
 });

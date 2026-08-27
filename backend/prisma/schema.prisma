@@ -152,8 +152,91 @@ model Student {
   responsibles   StudentResponsible[]
   documents      Document[]
   graduations    Graduation[]
+  cart           Cart?
+  orders         Order[]
   user           User?                 @relation("StudentUser")
   person         Person              @relation(fields: [personId], references: [id])
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Product {
+  id                Int           @id @default(autoincrement())
+  name              String
+  description       String
+  salePrice         Decimal
+  availableQuantity Int
+  status            ProductStatus @default(ACTIVE)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@index([status, name])
+}
+
+model Cart {
+  id        Int      @id @default(autoincrement())
+  studentId Int      @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student Student    @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  items   CartItem[]
+}
+
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  cartId    Int
+  productId Int
+  quantity  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([cartId, productId])
+  @@index([cartId])
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+}
+
+model Order {
+  id        Int         @id @default(autoincrement())
+  studentId Int
+  subtotal  Decimal
+  total     Decimal
+  status    OrderStatus @default(PENDING_PAYMENT)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  student Student     @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  items   OrderItem[]
+
+  @@index([studentId, createdAt])
+}
+
+model OrderItem {
+  id               Int      @id @default(autoincrement())
+  orderId          Int
+  productId        Int
+  productName      String
+  quantity         Int
+  unitPrice        Decimal
+  subtotal         Decimal
+  createdAt        DateTime @default(now())
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
 }
 
 model Document {
