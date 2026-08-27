@@ -6,6 +6,7 @@ const navigation = [
   { to: '/app', label: 'Início', icon: '⌂', end: true },
   { to: '/app/graduation', label: 'Graduação', icon: '◆' },
   { to: '/app/finance', label: 'Financeiro', icon: '$' },
+  { to: '/app/shop', label: 'Loja', icon: '▣' },
   { to: '/app/notices', label: 'Avisos', icon: '●' },
   { to: '/app/profile', label: 'Perfil', icon: '○' },
 ] as const;
@@ -22,7 +23,6 @@ export function StudentShell() {
           <span><strong>WG Grappling</strong><small>Área do aluno</small></span>
         </NavLink>
         <div className="student-header-actions">
-          <NavLink to="/app/shop" className="student-shop-link">Loja <span>Catálogo</span></NavLink>
           <button type="button" className="student-logout" onClick={() => { logout(); navigate('/login', { replace: true }); }}>
             Sair
           </button>

@@ -14,6 +14,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { StoreOperationsPage } from './pages/StoreOperationsPage';
 import { StudentShell } from './components/self-service/StudentShell';
+import { ThemeToggle } from './components/ThemeToggle';
 import {
   StudentAttendancePage,
   StudentFinancePage,
@@ -42,7 +43,7 @@ function HomeRedirect() {
 
 function App() {
   return (
-    <Routes>
+    <><ThemeToggle /><Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/app" element={<ProtectedRoute allowedRoles={['ALUNO']}><StudentShell /></ProtectedRoute>}>
         <Route index element={<StudentHomePage />} />
@@ -95,7 +96,7 @@ function App() {
       />
       <Route path="/" element={<HomeRedirect />} />
       <Route path="*" element={<HomeRedirect />} />
-    </Routes>
+    </Routes></>
   );
 }
 

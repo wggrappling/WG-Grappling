@@ -8,7 +8,7 @@ describe('StoreService operations', () => {
     productVariant: { create: jest.fn(), findUnique: jest.fn(), findMany: jest.fn(), update: jest.fn(), updateMany: jest.fn(), count: jest.fn() },
     stockEntry: { create: jest.fn() },
     student: { findFirst: jest.fn() },
-    order: { create: jest.fn(), update: jest.fn(), findUnique: jest.fn() },
+    order: { create: jest.fn(), update: jest.fn(), findUnique: jest.fn(), findMany: jest.fn() },
     commercialPayment: { create: jest.fn(), findUnique: jest.fn(), update: jest.fn(), updateMany: jest.fn() },
     cartItem: { deleteMany: jest.fn() },
     $transaction: jest.fn(),
@@ -82,5 +82,10 @@ describe('StoreService operations', () => {
     prisma.product.create.mockResolvedValue({ id: 3, variants: [] });
     await service.createProduct({ name: 'Conjunto', description: 'Personalizado', type: ProductType.SET, salePrice: 250, madeToOrder: true, leadTimeDays: 7, variants: [{ color: 'Preto', size: 'G', minimumStock: 0 }] }, admin);
     expect(prisma.product.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ status: ProductStatus.MADE_TO_ORDER, leadTimeDays: 7 }) }));
+  });
+
+  it('lists internal orders with server-calculated paid amount and balance', async () => {
+    prisma.order.findMany.mockResolvedValue([{ id: 12, subtotal: '150', total: '150', status: OrderStatus.CONFIRMED, createdAt: new Date(), student: { enrollmentNumber: 'WG-41', person: { name: 'Ana' } }, items: [{ id: 1, productName: 'Short', color: 'Preto', size: 'M', madeToOrder: false, quantity: 1, unitPrice: '150', subtotal: '150' }], payments: [{ id: 5, method: CommercialPaymentMethod.PIX_MANUAL, amount: '100', status: CommercialPaymentStatus.CONFIRMED, createdAt: new Date() }, { id: 6, method: CommercialPaymentMethod.PIX_MANUAL, amount: '50', status: CommercialPaymentStatus.UNDER_REVIEW, createdAt: new Date() }] }]);
+    await expect(service.listOrders()).resolves.toMatchObject([{ id: 12, total: 150, paid: 100, balance: 50 }]);
   });
 });

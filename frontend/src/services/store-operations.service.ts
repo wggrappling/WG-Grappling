@@ -6,6 +6,7 @@ export type InternalStoreProduct = {
   variants: Array<{ id: number; color: string; size: string; availableQuantity: number; minimumStock: number; latestUnitCost: number | null; stockState: string }>;
 };
 export type PaymentReview = { id: number; orderId: number; method: string; amount: string | number; justification: string; submittedAt: string; submitter: { name: string; role: string }; order: { total: string | number; student: { enrollmentNumber: string; person: { name: string } } } };
+export type InternalStoreOrder = { id: number; subtotal: number; total: number; paid: number; balance: number; status: string; createdAt: string; student: { enrollmentNumber: string; person: { name: string } }; items: Array<{ id: number; productName: string; color: string | null; size: string | null; madeToOrder: boolean; quantity: number; unitPrice: number; subtotal: number }>; payments: Array<{ id: number; method: string; amount: number; status: string; createdAt: string }> };
 
 export const storeOperations = {
   products: () => httpService.get<InternalStoreProduct[]>('/store/products'),
@@ -17,6 +18,8 @@ export const storeOperations = {
   createOrder: (body: unknown) => httpService.post<{ id: number; total: number; status: string }, unknown>('/store/orders', body),
   submitManualPayment: (orderId: number, body: unknown) => httpService.post(`/store/orders/${orderId}/payments/manual`, body),
   reviews: () => httpService.get<PaymentReview[]>('/store/payment-reviews'),
+  orders: () => httpService.get<InternalStoreOrder[]>('/store/orders'),
+  order: (orderId: number) => httpService.get<InternalStoreOrder>(`/store/orders/${orderId}`),
   approve: (paymentId: number, notes?: string) => httpService.post(`/store/payments/${paymentId}/approve`, { notes }),
   cancel: (orderId: number, reason: string, restock: boolean) => httpService.post(`/store/orders/${orderId}/cancel`, { reason, restock, confirmFinancialImpact: true }),
   refund: (paymentId: number, reason: string) => httpService.post(`/store/payments/${paymentId}/refund`, { reason, confirmFinancialImpact: true }),

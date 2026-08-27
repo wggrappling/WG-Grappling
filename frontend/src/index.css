@@ -10,7 +10,13 @@
   --muted: #657086;
   --line: #e2e7ef;
   --surface: #ffffff;
+  --app-bg: #f3f5f8;
+  --app-text: #172033;
+  --app-surface: #ffffff;
+  --app-border: #dce4df;
 }
+
+[data-theme="dark"] { --app-bg: #0d1215; --app-text: #f3f6f7; --app-surface: #151d21; --app-border: #2e3a40; --surface: #151d21; --muted: #a8b4b9; color: var(--app-text); background: var(--app-bg); }
 
 .dashboard-page { min-height: 100vh; padding: 24px clamp(18px, 4vw, 56px) 56px; background: #f5f7f6; color: #17211b; }
 .reports-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 16px; padding: 6px; border: 1px solid #dce4df; border-radius: 12px; background: #fff; }
@@ -89,6 +95,14 @@ body {
     radial-gradient(circle at top right, rgba(37, 99, 235, 0.08), transparent 30rem),
     #f3f5f8;
 }
+
+[data-theme="dark"] body { color: var(--app-text); background: radial-gradient(circle at top right, rgb(177 31 47 / 10%), transparent 30rem), var(--app-bg); }
+.theme-toggle { position: fixed; z-index: 100; right: 1rem; bottom: 1rem; width: 2.9rem; height: 2.9rem; border: 1px solid var(--app-border); border-radius: 999px; color: var(--app-text); background: var(--app-surface); box-shadow: 0 8px 24px rgb(0 0 0 / 18%); cursor: pointer; font-size: 1.25rem; }
+.theme-toggle:focus-visible { outline: 3px solid #b11f2f; outline-offset: 3px; }
+[data-theme="dark"] .dashboard-page, [data-theme="dark"] .students-page { background: var(--app-bg); color: var(--app-text); }
+[data-theme="dark"] .dashboard-state, [data-theme="dark"] .dashboard-cards article, [data-theme="dark"] .dashboard-panel, [data-theme="dark"] .reports-nav, [data-theme="dark"] .reports-panel { background: var(--app-surface); border-color: var(--app-border); color: var(--app-text); }
+@media (max-width: 759px) { .student-app ~ .theme-toggle, .theme-toggle { bottom: 5.4rem; right: .7rem; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
 
 .auth-loading {
   display: grid;

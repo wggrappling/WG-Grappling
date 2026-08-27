@@ -134,6 +134,37 @@ export class StoreService {
     return this.prisma.commercialPayment.findMany({ where: { status: CommercialPaymentStatus.UNDER_REVIEW }, orderBy: { createdAt: 'asc' }, select: { id: true, orderId: true, method: true, amount: true, justification: true, submittedAt: true, submitter: { select: { id: true, name: true, role: true } }, order: { select: { total: true, student: { select: { enrollmentNumber: true, person: { select: { name: true } } } } } } } });
   }
 
+  async listOrders() {
+    const orders = await this.prisma.order.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        student: { select: { enrollmentNumber: true, person: { select: { name: true } } } },
+        items: { select: { id: true, productName: true, color: true, size: true, madeToOrder: true, quantity: true, unitPrice: true, subtotal: true } },
+        payments: { select: { id: true, method: true, amount: true, status: true, createdAt: true } },
+      },
+    });
+    return orders.map((order) => this.presentInternalOrder(order));
+  }
+
+  async getOrder(orderId: number) {
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        student: { select: { enrollmentNumber: true, person: { select: { name: true } } } },
+        items: { select: { id: true, productName: true, color: true, size: true, madeToOrder: true, quantity: true, unitPrice: true, subtotal: true } },
+        payments: { select: { id: true, method: true, amount: true, status: true, createdAt: true } },
+      },
+    });
+    if (!order) throw new NotFoundException('Pedido não encontrado.');
+    return this.presentInternalOrder(order);
+  }
+
+  private presentInternalOrder(order: any) {
+    const total = money(order.total).toNumber();
+    const paid = order.payments.filter((payment: any) => payment.status === CommercialPaymentStatus.CONFIRMED).reduce((sum: Prisma.Decimal, payment: any) => sum.plus(payment.amount), money(0)).toNumber();
+    return { ...order, subtotal: money(order.subtotal).toNumber(), total, paid, balance: Math.max(0, total - paid), items: order.items.map((item: any) => ({ ...item, unitPrice: money(item.unitPrice).toNumber(), subtotal: money(item.subtotal).toNumber() })), payments: order.payments.map((payment: any) => ({ ...payment, amount: money(payment.amount).toNumber() })) };
+  }
+
   async approvePayment(paymentId: number, notes: string | undefined, actor: Actor) {
     const result = await this.prisma.$transaction(async (tx) => {
       const payment = await tx.commercialPayment.findUnique({ where: { id: paymentId }, include: { order: { include: { items: true, payments: true } } } });

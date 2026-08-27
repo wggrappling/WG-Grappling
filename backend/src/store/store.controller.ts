@@ -43,6 +43,12 @@ export class StoreController {
   async getImage(@Param('id', ParseIntPipe) id: number, @Res({ passthrough: true }) response: Response) { const image = await this.store.getProductImage(id); response.setHeader('Content-Type', image.mimeType); response.setHeader('Content-Length', String(image.data.length)); return new StreamableFile(image.data); }
 
   @Get('customers') findCustomer(@Query('cpf') cpf: string) { return this.store.findCustomer(cpf ?? ''); }
+  @Get('orders')
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  listOrders() { return this.store.listOrders(); }
+  @Get('orders/:id')
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  getOrder(@Param('id', ParseIntPipe) id: number) { return this.store.getOrder(id); }
   @Post('orders') createOrder(@Body() dto: CreateStoreOrderDto, @Request() req: AuthRequest) { return this.store.createReceptionOrder(dto, req.user); }
   @Post('orders/:id/payments/manual') submitPayment(@Param('id', ParseIntPipe) id: number, @Body() dto: ManualPaymentDto, @Request() req: AuthRequest) { return this.store.submitManualPayment(id, dto, req.user); }
 

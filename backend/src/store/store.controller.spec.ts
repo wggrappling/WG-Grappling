@@ -9,7 +9,7 @@ describe('StoreController RBAC', () => {
     expect(Reflect.getMetadata(GUARDS_METADATA, StoreController)).toHaveLength(2);
   });
 
-  it.each(['approve', 'refund', 'cancel', 'updateStatus', 'createProduct', 'addStock'] as const)('restricts %s to OWNER and ADMIN', (method) => {
+  it.each(['approve', 'refund', 'cancel', 'updateStatus', 'createProduct', 'addStock', 'listOrders', 'getOrder'] as const)('restricts %s to OWNER and ADMIN', (method) => {
     expect(Reflect.getMetadata(ROLES_KEY, StoreController.prototype[method])).toEqual([UserRole.OWNER, UserRole.ADMIN]);
   });
 });
