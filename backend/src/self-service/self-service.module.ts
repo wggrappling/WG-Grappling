@@ -5,12 +5,14 @@ import { StudentContextResolver } from './context/student-context.resolver';
 import { StudentAccessPolicy } from './context/student-access.policy';
 import { MeController } from './me.controller';
 import { MeService } from './me.service';
+import { SelfAcademicService } from './self-academic.service';
 
 @Module({
   imports: [PrismaModule],
   controllers: [MeController],
   providers: [
     MeService,
+    SelfAcademicService,
     StudentAccessPolicy,
     StudentContextResolver,
     StudentContextGuard,
