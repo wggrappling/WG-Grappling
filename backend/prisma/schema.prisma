@@ -159,6 +159,8 @@ model Student {
   graduations    Graduation[]
   cart           Cart?
   orders         Order[]
+  noticeRecipients NoticeStudentRecipient[]
+  noticeReads      NoticeRead[]
   user           User?                 @relation("StudentUser")
   person         Person              @relation(fields: [personId], references: [id])
 }
@@ -417,6 +419,7 @@ model Modality {
   classes           Class[]
   graduations       Graduation[]
   graduationLevels  GraduationLevel[]
+  noticeRecipients  NoticeModalityRecipient[]
 }
 
 model GraduationLevel {
@@ -535,6 +538,68 @@ model Class {
 
   attendances Attendance[]
   studentClasses StudentClass[]
+  noticeRecipients NoticeClassRecipient[]
+}
+
+model Notice {
+  id          Int      @id @default(autoincrement())
+  title       String
+  content     String
+  publishedAt DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  studentRecipients  NoticeStudentRecipient[]
+  modalityRecipients NoticeModalityRecipient[]
+  classRecipients    NoticeClassRecipient[]
+  reads              NoticeRead[]
+
+  @@index([publishedAt])
+}
+
+model NoticeStudentRecipient {
+  noticeId  Int
+  studentId Int
+
+  notice  Notice  @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@id([noticeId, studentId])
+  @@index([studentId, noticeId])
+}
+
+model NoticeModalityRecipient {
+  noticeId   Int
+  modalityId Int
+
+  notice   Notice   @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  modality Modality @relation(fields: [modalityId], references: [id], onDelete: Cascade)
+
+  @@id([noticeId, modalityId])
+  @@index([modalityId, noticeId])
+}
+
+model NoticeClassRecipient {
+  noticeId Int
+  classId  Int
+
+  notice Notice @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  class  Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@id([noticeId, classId])
+  @@index([classId, noticeId])
+}
+
+model NoticeRead {
+  noticeId Int
+  studentId Int
+  readAt    DateTime @default(now())
+
+  notice  Notice  @relation(fields: [noticeId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@id([noticeId, studentId])
+  @@index([studentId, readAt])
 }
 
 enum AttendanceStatus {

@@ -118,6 +118,19 @@
 .student-profile-list div:last-child { border: 0; }
 .student-profile-list dt { color: var(--student-muted); font-size: .78rem; }
 .student-profile-list dd { margin: .2rem 0 0; overflow-wrap: anywhere; }
+.student-notice-list { display: grid; gap: .65rem; }
+.student-notice-list article { align-items: center; background: var(--student-surface); border: 1px solid var(--student-border); border-radius: 1rem; display: grid; gap: .75rem; grid-template-columns: .75rem 1fr; min-height: 4.75rem; padding: .85rem 1rem; }
+.student-notice-list a { color: var(--student-text); display: block; font-weight: 700; min-height: 2.75rem; padding-block: .7rem; text-decoration: none; }
+.student-notice-list time, .student-notice-detail time { color: var(--student-muted); display: block; font-size: .8rem; }
+.student-notice-dot { background: transparent; border-radius: 50%; height: .65rem; width: .65rem; }
+.student-notice-unread .student-notice-dot { background: var(--student-accent); }
+.student-notice-read a { color: var(--student-muted); font-weight: 600; }
+.student-notice-detail { display: grid; gap: 1.25rem; max-width: 46rem; }
+.student-notice-detail h2 { margin: .8rem 0 .35rem; }
+.student-notice-detail p { color: var(--student-text); line-height: 1.65; margin: 0; white-space: pre-wrap; }
+.student-notice-detail button { background: var(--student-accent); border: 0; border-radius: .75rem; color: white; cursor: pointer; min-height: 2.75rem; padding: .7rem 1rem; width: fit-content; }
+.student-notice-detail button:disabled { cursor: wait; opacity: .7; }
+.student-back-link { color: var(--student-text); min-height: 2.75rem; padding-block: .65rem; width: fit-content; }
 .student-app :focus-visible { outline: 3px solid var(--student-accent); outline-offset: 3px; }
 @keyframes student-spin { to { transform: rotate(360deg); } }
 

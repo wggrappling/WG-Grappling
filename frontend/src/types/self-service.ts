@@ -103,3 +103,11 @@ export type AcademicPayment = {
   refundedAt: string | null;
   state: 'VALID' | 'REFUNDED';
 };
+
+export type SelfNotice = {
+  id: number;
+  title: string;
+  content: string;
+  publishedAt: string;
+  isRead: boolean;
+};

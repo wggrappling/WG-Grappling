@@ -37,6 +37,8 @@ import { AddCartItemDto, UpdateCartItemDto } from './dto/self-store.dto';
 import { SelfCheckoutDto } from '../store/dto/store.dto';
 import { StoreService } from '../store/store.service';
 import { SelfStoreService } from './self-store.service';
+import { SelfNoticeService } from './self-notice.service';
+import { SelfNoticeProjectionDto } from './dto/self-notice-projection.dto';
 import {
   SelfServiceCapability,
   StudentAccessPolicy,
@@ -54,6 +56,7 @@ export class MeController {
     private readonly storeService: SelfStoreService,
     private readonly accessPolicy: StudentAccessPolicy,
     private readonly operations: StoreService,
+    private readonly noticeService: SelfNoticeService,
   ) {}
 
   @Get()
@@ -93,6 +96,31 @@ export class MeController {
   @ApiOkResponse({ type: SelfFinanceProjectionDto })
   getFinance(@AuthenticatedContext() context: AuthenticatedUserContext) {
     return this.academicService.getFinance(context);
+  }
+
+  @Get('notices')
+  @ApiOkResponse({ type: SelfNoticeProjectionDto, isArray: true })
+  getNotices(@AuthenticatedContext() context: AuthenticatedUserContext) {
+    return this.noticeService.getNotices(context);
+  }
+
+  @Get('notices/:id')
+  @ApiOkResponse({ type: SelfNoticeProjectionDto })
+  getNotice(
+    @AuthenticatedContext() context: AuthenticatedUserContext,
+    @Param('id', ParseIntPipe) noticeId: number,
+  ) {
+    return this.noticeService.getNotice(context, noticeId);
+  }
+
+  @Post('notices/:id/read')
+  @HttpCode(200)
+  @ApiOkResponse({ type: SelfNoticeProjectionDto })
+  markNoticeRead(
+    @AuthenticatedContext() context: AuthenticatedUserContext,
+    @Param('id', ParseIntPipe) noticeId: number,
+  ) {
+    return this.noticeService.markRead(context, noticeId);
   }
 
   @Get('store/products')

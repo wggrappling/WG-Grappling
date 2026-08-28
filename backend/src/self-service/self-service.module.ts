@@ -8,6 +8,7 @@ import { MeService } from './me.service';
 import { SelfAcademicService } from './self-academic.service';
 import { SelfStoreService } from './self-store.service';
 import { StoreModule } from '../store/store.module';
+import { SelfNoticeService } from './self-notice.service';
 
 @Module({
   imports: [PrismaModule, StoreModule],
@@ -16,6 +17,7 @@ import { StoreModule } from '../store/store.module';
     MeService,
     SelfAcademicService,
     SelfStoreService,
+    SelfNoticeService,
     StudentAccessPolicy,
     StudentContextResolver,
     StudentContextGuard,

@@ -6,6 +6,7 @@ import type {
   MeProjection,
   ModalitiesProjection,
   SelfProfile,
+  SelfNotice,
 } from '../types/self-service';
 import type { StoreCart, StoreOrder, StoreOrderSummary, StoreProduct } from '../types/store';
 
@@ -22,6 +23,9 @@ export const selfService = {
       },
     }),
   finance: () => httpService.get<FinanceProjection>('/me/finance'),
+  notices: () => httpService.get<SelfNotice[]>('/me/notices'),
+  notice: (noticeId: number) => httpService.get<SelfNotice>(`/me/notices/${noticeId}`),
+  markNoticeRead: (noticeId: number) => httpService.post<SelfNotice, Record<string, never>>(`/me/notices/${noticeId}/read`, {}),
   storeProducts: () => httpService.get<StoreProduct[]>('/me/store/products'),
   storeProduct: (productId: number) => httpService.get<StoreProduct>(`/me/store/products/${productId}`),
   cart: () => httpService.get<StoreCart>('/me/cart'),
