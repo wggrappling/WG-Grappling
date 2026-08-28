@@ -118,6 +118,10 @@
 .student-profile-list div:last-child { border: 0; }
 .student-profile-list dt { color: var(--student-muted); font-size: .78rem; }
 .student-profile-list dd { margin: .2rem 0 0; overflow-wrap: anywhere; }
+.student-profile-identity { align-items: center; display: flex; gap: 1rem; margin-bottom: 1rem; }
+.student-profile-identity h2, .student-profile-identity p { margin: 0; }
+.student-profile-avatar { align-items: center; background: var(--student-accent); border-radius: 50%; color: white; display: flex; flex: 0 0 3.5rem; font-size: 1.5rem; font-weight: 800; height: 3.5rem; justify-content: center; }
+.student-profile-address { color: var(--student-text); font-style: normal; line-height: 1.65; }
 .student-notice-list { display: grid; gap: .65rem; }
 .student-notice-list article { align-items: center; background: var(--student-surface); border: 1px solid var(--student-border); border-radius: 1rem; display: grid; gap: .75rem; grid-template-columns: .75rem 1fr; min-height: 4.75rem; padding: .85rem 1rem; }
 .student-notice-list a { color: var(--student-text); display: block; font-weight: 700; min-height: 2.75rem; padding-block: .7rem; text-decoration: none; }

@@ -23,7 +23,7 @@ describe('MeService', () => {
     enrollmentNumber: 'WG-20',
     status: StudentStatus.ACTIVE,
     joinedAt,
-    person: { name: 'Aluno A', email: 'a@teste.local', phone: '11999999999' },
+    person: { name: 'Aluno A', email: 'a@teste.local', phone: '11999999999', cpf: '52998224725', address: null },
   };
 
   beforeEach(() => jest.clearAllMocks());
@@ -86,22 +86,30 @@ describe('MeService', () => {
     }));
   });
 
-  it('returns the approved profile without CPF, address, notes or credentials', async () => {
-    prisma.student.findFirst.mockResolvedValue(student);
+  it('returns masked CPF and own address in a closed profile projection', async () => {
+    prisma.student.findFirst.mockResolvedValue({ ...student, person: { ...student.person, address: { zipCode: '01001000', street: 'Praça da Sé', number: '10', complement: null, neighborhood: 'Sé', city: 'São Paulo', state: 'SP', country: 'Brasil' } } });
     const result = await service.getProfile(context);
     expect(result).toEqual({
-      id: 20,
       name: 'Aluno A',
       email: 'a@teste.local',
       phone: '11999999999',
+      maskedCpf: '***.982.247-**',
+      address: { zipCode: '01001000', street: 'Praça da Sé', number: '10', complement: null, neighborhood: 'Sé', city: 'São Paulo', state: 'SP', country: 'Brasil' },
       enrollmentNumber: 'WG-20',
       studentStatus: StudentStatus.ACTIVE,
       joinedAt,
     });
     expect(result).not.toHaveProperty('cpf');
-    expect(result).not.toHaveProperty('address');
     expect(result).not.toHaveProperty('notes');
     expect(result).not.toHaveProperty('sessionVersion');
+    expect(result).not.toHaveProperty('id');
+    expect(result).not.toHaveProperty('password');
+    expect(result).not.toHaveProperty('role');
+  });
+
+  it('fails safely when a legacy CPF cannot be masked', async () => {
+    prisma.student.findFirst.mockResolvedValue({ ...student, person: { ...student.person, cpf: 'invalid' } });
+    await expect(service.getProfile(context)).resolves.toEqual(expect.objectContaining({ maskedCpf: '***.***.***-**' }));
   });
 
   it('fails closed instead of returning another Student', async () => {

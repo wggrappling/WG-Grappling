@@ -136,14 +136,12 @@ export function StudentProfilePage() {
     <ResourceState {...resource} onRetry={() => void resource.refresh()}>
       {resource.data && <>
         <PausedBanner paused={resource.data.studentStatus === 'PAUSED'} />
-        <section className="student-card"><dl className="student-profile-list">
-          <div><dt>Nome</dt><dd>{resource.data.name}</dd></div>
-          <div><dt>E-mail</dt><dd>{resource.data.email}</dd></div>
-          <div><dt>Telefone</dt><dd>{resource.data.phone ?? 'Não informado'}</dd></div>
-          <div><dt>Matrícula</dt><dd>{resource.data.enrollmentNumber}</dd></div>
-          <div><dt>Situação</dt><dd>{statusLabel[resource.data.studentStatus]}</dd></div>
-          <div><dt>Entrada</dt><dd>{date(resource.data.joinedAt)}</dd></div>
+        <section className="student-card student-profile-identity"><div className="student-profile-avatar" aria-hidden="true">{resource.data.name.trim().charAt(0).toUpperCase()}</div><div><h2>{resource.data.name}</h2><p>Matrícula {resource.data.enrollmentNumber} · {statusLabel[resource.data.studentStatus]}</p></div></section>
+        <section className="student-card"><h2>Dados pessoais</h2><dl className="student-profile-list">
+          <div><dt>E-mail</dt><dd>{resource.data.email}</dd></div><div><dt>Telefone</dt><dd>{resource.data.phone ?? 'Não informado'}</dd></div><div><dt>CPF</dt><dd>{resource.data.maskedCpf}</dd></div><div><dt>Entrada</dt><dd>{date(resource.data.joinedAt)}</dd></div>
         </dl></section>
+        <section className="student-card"><h2>Endereço</h2>{resource.data.address ? <address className="student-profile-address">{resource.data.address.street}, {resource.data.address.number ?? 's/n'}{resource.data.address.complement ? ` · ${resource.data.address.complement}` : ''}<br />{resource.data.address.neighborhood} · {resource.data.address.city}/{resource.data.address.state}<br />CEP {resource.data.address.zipCode} · {resource.data.address.country}</address> : <p>Endereço não informado.</p>}</section>
+        <section className="student-card"><h2>Segurança</h2><p>Alterações de e-mail, senha e dados cadastrais devem ser solicitadas à academia.</p></section>
         <section className="student-quick-links"><Link to="/app/modalities"><strong>Modalidades</strong><span>Consultar vínculos</span></Link><Link to="/app/attendance"><strong>Presença</strong><span>Consultar registros</span></Link></section>
       </>}
     </ResourceState>

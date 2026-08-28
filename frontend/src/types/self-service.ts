@@ -7,10 +7,11 @@ export type MeProjection = {
 };
 
 export type SelfProfile = {
-  id: number;
   name: string;
   email: string;
   phone: string | null;
+  maskedCpf: string;
+  address: { zipCode: string; street: string; number: string | null; complement: string | null; neighborhood: string; city: string; state: string; country: string } | null;
   enrollmentNumber: string;
   studentStatus: StudentStatus;
   joinedAt: string;

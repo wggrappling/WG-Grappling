@@ -10,7 +10,10 @@ const studentProjection = {
   enrollmentNumber: true,
   status: true,
   joinedAt: true,
-  person: { select: { name: true, email: true, phone: true } },
+  person: { select: {
+    name: true, email: true, phone: true, cpf: true,
+    address: { select: { zipCode: true, street: true, number: true, complement: true, neighborhood: true, city: true, state: true, country: true } },
+  } },
 } as const;
 
 @Injectable()
@@ -73,13 +76,19 @@ export class MeService {
     }
 
     return {
-      id: student.id,
       name: student.person.name,
       email: student.person.email,
       phone: student.person.phone,
+      maskedCpf: this.maskCpf(student.person.cpf),
+      address: student.person.address,
       enrollmentNumber: student.enrollmentNumber,
       studentStatus: student.status,
       joinedAt: student.joinedAt,
     };
+  }
+
+  private maskCpf(cpf: string): string {
+    const digits = cpf.replace(/\D/g, '');
+    return digits.length === 11 ? `***.${digits.slice(3, 6)}.${digits.slice(6, 9)}-**` : '***.***.***-**';
   }
 }

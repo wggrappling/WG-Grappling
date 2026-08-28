@@ -44,13 +44,26 @@ describe('student self-service pages', () => {
 
   it('shows PAUSED as consultation-only without operation controls', async () => {
     mocked.profile.mockResolvedValue({
-      id: 44, name: 'Ana', email: 'ana@example.com', phone: null,
+      name: 'Ana', email: 'ana@example.com', phone: null, maskedCpf: '***.982.247-**', address: null,
       enrollmentNumber: 'WG-44', studentStatus: 'PAUSED', joinedAt: '2026-01-01',
     });
     renderPage(<StudentProfilePage />);
     expect(await screen.findByText('Matrícula pausada')).toBeInTheDocument();
     expect(screen.getByText(/somente para consulta/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /salvar|editar/i })).not.toBeInTheDocument();
+  });
+
+  it('shows masked CPF and only the authenticated student address', async () => {
+    mocked.profile.mockResolvedValue({
+      name: 'Ana', email: 'ana@example.com', phone: '11999999999', maskedCpf: '***.982.247-**',
+      address: { zipCode: '01001000', street: 'Praça da Sé', number: '10', complement: null, neighborhood: 'Sé', city: 'São Paulo', state: 'SP', country: 'Brasil' },
+      enrollmentNumber: 'WG-44', studentStatus: 'ACTIVE', joinedAt: '2026-01-01',
+    });
+    renderPage(<StudentProfilePage />);
+    expect(await screen.findByText('***.982.247-**')).toBeInTheDocument();
+    expect(screen.getByText(/Praça da Sé, 10/)).toBeInTheDocument();
+    expect(screen.getByText(/Alterações de e-mail, senha e dados cadastrais/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /salvar|editar|alterar senha/i })).not.toBeInTheDocument();
   });
 
   it('renders empty graduation state', async () => {
