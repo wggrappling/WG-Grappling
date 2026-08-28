@@ -38,6 +38,10 @@ export const selfService = {
   schedule: () => httpService.get<SelfSchedule>('/me/schedule'),
   storeProducts: () => httpService.get<StoreProduct[]>('/me/store/products'),
   storeProduct: (productId: number) => httpService.get<StoreProduct>(`/me/store/products/${productId}`),
+  async storeProductImage(productId: number) {
+    const response = await apiClient.get<Blob>(`/me/store/products/${productId}/image`, { responseType: 'blob' });
+    return response.data;
+  },
   cart: () => httpService.get<StoreCart>('/me/cart'),
   addCartItem: (productId: number, variantId: number, quantity: number) =>
     httpService.post<StoreCart, { productId: number; variantId: number; quantity: number }>('/me/cart/items', { productId, variantId, quantity }),

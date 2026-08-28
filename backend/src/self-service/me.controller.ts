@@ -177,7 +177,7 @@ export class MeController {
 
   @Get('store/products/:id/image')
   async getStoreProductImage(@Param('id', ParseIntPipe) productId: number, @Res({ passthrough: true }) response: Response) {
-    const image = await this.operations.getProductImage(productId);
+    const image = await this.storeService.getProductImage(productId);
     response.setHeader('Content-Type', image.mimeType);
     response.setHeader('Content-Length', String(image.data.length));
     return new StreamableFile(image.data);

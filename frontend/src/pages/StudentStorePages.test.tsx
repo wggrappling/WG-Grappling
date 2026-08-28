@@ -8,6 +8,7 @@ import { StudentCartPage, StudentOrderPage, StudentOrdersPage, StudentProductPag
 vi.mock('../services', () => ({
   selfService: {
     me: vi.fn(), storeProducts: vi.fn(), storeProduct: vi.fn(), cart: vi.fn(),
+    storeProductImage: vi.fn(),
     addCartItem: vi.fn(), updateCartItem: vi.fn(), removeCartItem: vi.fn(),
     orders: vi.fn(), order: vi.fn(), checkout: vi.fn(),
   },
@@ -24,6 +25,17 @@ const renderAt = (path: string, element: React.ReactNode, routePath = '*') => re
 
 describe('student store pages', () => {
   beforeEach(() => vi.clearAllMocks());
+
+  it('loads protected product images through the authenticated service', async () => {
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: vi.fn(() => 'blob:product') });
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: vi.fn() });
+    mocked.me.mockResolvedValue(me());
+    mocked.storeProducts.mockResolvedValue([{ ...product, imageUrl: '/me/store/products/3/image' }]);
+    mocked.storeProductImage.mockResolvedValue(new Blob(['image']));
+    renderAt('/app/shop', <StudentStorePage />);
+    expect(await screen.findByRole('img', { name: 'Foto de Kimono' })).toHaveAttribute('src', 'blob:product');
+    expect(mocked.storeProductImage).toHaveBeenCalledWith(3);
+  });
 
   it('renders loading and a real catalog without exposing stock quantity', async () => {
     mocked.me.mockResolvedValue(me());

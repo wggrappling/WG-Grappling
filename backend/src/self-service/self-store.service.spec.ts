@@ -3,6 +3,7 @@ import { ProductStatus, StudentStatus, UserRole } from '../../generated/prisma/e
 import { PrismaService } from '../prisma/prisma.service';
 import { SelfServiceCapability } from './context/student-access.policy';
 import { SelfStoreService } from './self-store.service';
+import { StorageService } from '../documents/storage/storage.service';
 
 describe('SelfStoreService', () => {
   const prisma = {
@@ -12,7 +13,11 @@ describe('SelfStoreService', () => {
     cartItem: { findUnique: jest.fn(), findFirst: jest.fn(), upsert: jest.fn(), update: jest.fn(), delete: jest.fn() },
     order: { findMany: jest.fn(), findFirst: jest.fn() },
   };
-  const service = new SelfStoreService(prisma as unknown as PrismaService);
+  const storage = { get: jest.fn() };
+  const service = new SelfStoreService(
+    prisma as unknown as PrismaService,
+    storage as unknown as StorageService,
+  );
   const context = {
     userId: 7,
     role: UserRole.ALUNO,
@@ -34,6 +39,19 @@ describe('SelfStoreService', () => {
     await expect(service.getProduct(99)).rejects.toThrow(NotFoundException);
     prisma.productVariant.findFirst.mockResolvedValueOnce({ id: 11, availableQuantity: 1, product: { madeToOrder: false } });
     await expect(service.addCartItem(context, 3, 11, 2)).rejects.toThrow(BadRequestException);
+  });
+
+  it('serves images only for products visible in the student catalog', async () => {
+    prisma.product.findFirst.mockResolvedValueOnce({ imageKey: 'store-3', imageMimeType: 'image/webp' });
+    storage.get.mockResolvedValueOnce(Buffer.from('image'));
+    await expect(service.getProductImage(3)).resolves.toEqual({ data: Buffer.from('image'), mimeType: 'image/webp' });
+    expect(prisma.product.findFirst).toHaveBeenCalledWith({
+      where: { id: 3, status: { in: [ProductStatus.ACTIVE, ProductStatus.MADE_TO_ORDER] } },
+      select: { imageKey: true, imageMimeType: true },
+    });
+
+    prisma.product.findFirst.mockResolvedValueOnce(null);
+    await expect(service.getProductImage(99)).rejects.toThrow(NotFoundException);
   });
 
   it('calculates cart prices from the current server-side product price', async () => {

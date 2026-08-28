@@ -24,10 +24,10 @@ describe('MeController', () => {
   const store = {
     getProducts: jest.fn(), getProduct: jest.fn(), getCart: jest.fn(),
     addCartItem: jest.fn(), updateCartItem: jest.fn(), removeCartItem: jest.fn(),
-    getOrders: jest.fn(), getOrder: jest.fn(),
+    getOrders: jest.fn(), getOrder: jest.fn(), getProductImage: jest.fn(),
   };
   const policy = { assertCapability: jest.fn() };
-  const operations = { createSelfOrder: jest.fn(), getProductImage: jest.fn() };
+  const operations = { createSelfOrder: jest.fn() };
   const notices = { getNotices: jest.fn(), getNotice: jest.fn(), markRead: jest.fn() };
   const documents = { getDocuments: jest.fn(), getDocument: jest.fn(), getFile: jest.fn() };
   const schedule = { getSchedule: jest.fn() };
@@ -92,6 +92,13 @@ describe('MeController', () => {
     await controller.getOrders(context);
     expect(store.getCart).toHaveBeenCalledWith(context);
     expect(store.getOrders).toHaveBeenCalledWith(context);
+  });
+
+  it('uses the student catalog projection for product images', async () => {
+    store.getProductImage.mockResolvedValue({ data: Buffer.from('image'), mimeType: 'image/png' });
+    const response = { setHeader: jest.fn() };
+    await controller.getStoreProductImage(3, response as never);
+    expect(store.getProductImage).toHaveBeenCalledWith(3);
   });
 
   it('forwards only authenticated context and resource id for document reads', async () => {

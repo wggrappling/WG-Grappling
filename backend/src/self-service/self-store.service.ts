@@ -6,6 +6,7 @@ import {
 import { ProductStatus } from '../../generated/prisma/enums';
 import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { StorageService } from '../documents/storage/storage.service';
 import type { AuthenticatedUserContext } from './context/authenticated-user-context';
 
 const publicProductSelect = {
@@ -34,7 +35,10 @@ const cartSelect = {
 
 @Injectable()
 export class SelfStoreService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storage: StorageService,
+  ) {}
 
   async getProducts() {
     const products = await this.prisma.product.findMany({
@@ -52,6 +56,23 @@ export class SelfStoreService {
     });
     if (!product) throw new NotFoundException('Produto não encontrado.');
     return this.projectProduct(product);
+  }
+
+  async getProductImage(productId: number) {
+    const product = await this.prisma.product.findFirst({
+      where: {
+        id: productId,
+        status: { in: [ProductStatus.ACTIVE, ProductStatus.MADE_TO_ORDER] },
+      },
+      select: { imageKey: true, imageMimeType: true },
+    });
+    if (!product?.imageKey || !product.imageMimeType) {
+      throw new NotFoundException('Imagem não encontrada.');
+    }
+    return {
+      data: await this.storage.get(product.imageKey),
+      mimeType: product.imageMimeType,
+    };
   }
 
   async getCart(context: AuthenticatedUserContext) {
