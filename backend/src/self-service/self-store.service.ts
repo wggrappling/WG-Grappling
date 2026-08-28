@@ -173,6 +173,8 @@ export class SelfStoreService {
             subtotal: true,
             color: true,
             size: true,
+            madeToOrder: true,
+            product: { select: { leadTimeDays: true } },
           },
         },
       },
@@ -186,8 +188,9 @@ export class SelfStoreService {
       paid: paid.toNumber(),
       balance: Prisma.Decimal.max(0, new Prisma.Decimal(order.total).minus(paid)).toNumber(),
       payments: order.payments.map((payment) => ({ ...payment, amount: Number(payment.amount) })),
-      items: order.items.map((item) => ({
+      items: order.items.map(({ product, ...item }) => ({
         ...item,
+        leadTimeDays: item.madeToOrder ? product.leadTimeDays : null,
         unitPrice: Number(item.unitPrice),
         subtotal: Number(item.subtotal),
       })),

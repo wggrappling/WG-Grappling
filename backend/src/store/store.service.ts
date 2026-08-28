@@ -74,7 +74,7 @@ export class StoreService {
 
   async findCustomer(cpf: string) {
     const student = await this.findStudentByCpf(cpf);
-    return { enrollmentNumber: student.enrollmentNumber, name: student.person.name, cpf: student.person.cpf, status: student.status };
+    return { enrollmentNumber: student.enrollmentNumber, name: student.person.name, status: student.status };
   }
 
   private async findStudentByCpf(cpf: string) {
@@ -97,7 +97,7 @@ export class StoreService {
   }
 
   private async createOrder(studentId: number, items: Array<{ variantId: number; quantity: number }>, method: CommercialPaymentMethod, amount: number, actor: Actor, justification?: string) {
-    const underReview = manualMethods.includes(method) && actor.role === UserRole.RECEPTION;
+    const underReview = manualMethods.includes(method) && actor.role !== UserRole.ALUNO;
     if (underReview && !justification?.trim()) throw new BadRequestException('Justificativa obrigatória.');
     const result = await this.prisma.$transaction(async (tx) => {
       const ids = [...new Set(items.map((item) => item.variantId))];
@@ -131,7 +131,7 @@ export class StoreService {
   }
 
   async listPaymentReviews() {
-    return this.prisma.commercialPayment.findMany({ where: { status: CommercialPaymentStatus.UNDER_REVIEW }, orderBy: { createdAt: 'asc' }, select: { id: true, orderId: true, method: true, amount: true, justification: true, submittedAt: true, submitter: { select: { id: true, name: true, role: true } }, order: { select: { total: true, student: { select: { enrollmentNumber: true, person: { select: { name: true } } } } } } } });
+    return this.prisma.commercialPayment.findMany({ where: { status: CommercialPaymentStatus.UNDER_REVIEW }, orderBy: { createdAt: 'asc' }, select: { id: true, orderId: true, method: true, amount: true, justification: true, submittedAt: true, submitter: { select: { name: true, role: true } }, order: { select: { total: true, items: { select: { productName: true, color: true, size: true, quantity: true } }, student: { select: { enrollmentNumber: true, person: { select: { name: true } } } } } } } });
   }
 
   async listOrders() {
@@ -139,7 +139,7 @@ export class StoreService {
       orderBy: { createdAt: 'desc' },
       include: {
         student: { select: { enrollmentNumber: true, person: { select: { name: true } } } },
-        items: { select: { id: true, productName: true, color: true, size: true, madeToOrder: true, quantity: true, unitPrice: true, subtotal: true } },
+        items: { select: { id: true, productName: true, color: true, size: true, madeToOrder: true, quantity: true, unitPrice: true, subtotal: true, product: { select: { leadTimeDays: true } } } },
         payments: { select: { id: true, method: true, amount: true, status: true, createdAt: true } },
       },
     });
@@ -151,7 +151,7 @@ export class StoreService {
       where: { id: orderId },
       include: {
         student: { select: { enrollmentNumber: true, person: { select: { name: true } } } },
-        items: { select: { id: true, productName: true, color: true, size: true, madeToOrder: true, quantity: true, unitPrice: true, subtotal: true } },
+        items: { select: { id: true, productName: true, color: true, size: true, madeToOrder: true, quantity: true, unitPrice: true, subtotal: true, product: { select: { leadTimeDays: true } } } },
         payments: { select: { id: true, method: true, amount: true, status: true, createdAt: true } },
       },
     });
@@ -162,7 +162,7 @@ export class StoreService {
   private presentInternalOrder(order: any) {
     const total = money(order.total).toNumber();
     const paid = order.payments.filter((payment: any) => payment.status === CommercialPaymentStatus.CONFIRMED).reduce((sum: Prisma.Decimal, payment: any) => sum.plus(payment.amount), money(0)).toNumber();
-    return { ...order, subtotal: money(order.subtotal).toNumber(), total, paid, balance: Math.max(0, total - paid), items: order.items.map((item: any) => ({ ...item, unitPrice: money(item.unitPrice).toNumber(), subtotal: money(item.subtotal).toNumber() })), payments: order.payments.map((payment: any) => ({ ...payment, amount: money(payment.amount).toNumber() })) };
+    return { ...order, subtotal: money(order.subtotal).toNumber(), total, paid, balance: Math.max(0, total - paid), items: order.items.map(({ product, ...item }: any) => ({ ...item, leadTimeDays: item.madeToOrder ? product.leadTimeDays : null, unitPrice: money(item.unitPrice).toNumber(), subtotal: money(item.subtotal).toNumber() })), payments: order.payments.map((payment: any) => ({ ...payment, amount: money(payment.amount).toNumber() })) };
   }
 
   async approvePayment(paymentId: number, notes: string | undefined, actor: Actor) {
@@ -193,11 +193,55 @@ export class StoreService {
     return result;
   }
 
+  async rejectPayment(paymentId: number, notes: string, actor: Actor) {
+    const result = await this.prisma.$transaction(async (tx) => {
+      const payment = await tx.commercialPayment.findUnique({
+        where: { id: paymentId },
+        include: { order: { include: { payments: true } } },
+      });
+      if (!payment || payment.status !== CommercialPaymentStatus.UNDER_REVIEW) {
+        throw new ConflictException('Pagamento não está em análise.');
+      }
+      const hasOtherReview = payment.order.payments.some(
+        (item) => item.id !== paymentId && item.status === CommercialPaymentStatus.UNDER_REVIEW,
+      );
+      await tx.commercialPayment.update({
+        where: { id: paymentId },
+        data: {
+          status: CommercialPaymentStatus.FAILED,
+          reviewedBy: actor.id,
+          reviewedAt: new Date(),
+          reviewNotes: notes.trim(),
+        },
+      });
+      const orderStatus = hasOtherReview ? OrderStatus.PAYMENT_REVIEW : OrderStatus.PENDING_PAYMENT;
+      await tx.order.update({ where: { id: payment.orderId }, data: { status: orderStatus } });
+      return { paymentId, orderId: payment.orderId, orderStatus };
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+    await this.audit.record({ userId: actor.id, action: 'REJECT', entity: 'CommercialPayment', entityId: String(paymentId), metadata: result });
+    return result;
+  }
+
   async updateOrderStatus(orderId: number, dto: UpdateStoreOrderStatusDto, actor: Actor) {
-    const allowed: OrderStatus[] = [OrderStatus.IN_PRODUCTION, OrderStatus.AWAITING_DELIVERY, OrderStatus.READY_FOR_PICKUP, OrderStatus.COMPLETED];
-    if (!allowed.includes(dto.status)) throw new BadRequestException('Status operacional inválido.');
-    const order = await this.prisma.order.findUnique({ where: { id: orderId }, select: { status: true, stockReleasedAt: true } });
+    const transitions: Partial<Record<OrderStatus, readonly OrderStatus[]>> = {
+      [OrderStatus.CONFIRMED]: [OrderStatus.READY_FOR_PICKUP],
+      [OrderStatus.IN_PRODUCTION]: [OrderStatus.AWAITING_DELIVERY],
+      [OrderStatus.AWAITING_DELIVERY]: [OrderStatus.READY_FOR_PICKUP],
+      [OrderStatus.READY_FOR_PICKUP]: [OrderStatus.COMPLETED],
+    };
+    const order = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      select: {
+        status: true,
+        stockReleasedAt: true,
+        total: true,
+        payments: { where: { status: CommercialPaymentStatus.CONFIRMED }, select: { amount: true } },
+      },
+    });
     if (!order?.stockReleasedAt) throw new ConflictException('Mercadoria não pode ser liberada sem pagamento confirmado.');
+    const confirmed = order.payments.reduce((sum, payment) => sum.plus(payment.amount), money(0));
+    if (confirmed.lessThan(order.total)) throw new ConflictException('Mercadoria não pode ser liberada sem quitação confirmada.');
+    if (!transitions[order.status]?.includes(dto.status)) throw new BadRequestException('Transição operacional inválida.');
     const updated = await this.prisma.order.update({ where: { id: orderId }, data: { status: dto.status } });
     await this.audit.record({ userId: actor.id, action: 'UPDATE_STATUS', entity: 'Order', entityId: String(orderId), metadata: { from: order.status, to: dto.status } });
     return updated;
@@ -218,9 +262,17 @@ export class StoreService {
 
   async refundPayment(paymentId: number, dto: RefundPaymentDto, actor: Actor) {
     if (!dto.confirmFinancialImpact) throw new BadRequestException('Confirmação do impacto financeiro obrigatória.');
-    const payment = await this.prisma.commercialPayment.findUnique({ where: { id: paymentId } });
-    if (!payment || payment.status !== CommercialPaymentStatus.CONFIRMED || !manualMethods.includes(payment.method)) throw new ConflictException('Estorno manual indisponível para este pagamento.');
-    const updated = await this.prisma.commercialPayment.update({ where: { id: paymentId }, data: { status: CommercialPaymentStatus.REFUNDED, refundedBy: actor.id, refundedAt: new Date(), refundReason: dto.reason.trim() } });
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const payment = await tx.commercialPayment.findUnique({
+        where: { id: paymentId },
+        include: { order: { include: { payments: true } } },
+      });
+      if (!payment || payment.status !== CommercialPaymentStatus.CONFIRMED || !manualMethods.includes(payment.method)) throw new ConflictException('Estorno manual indisponível para este pagamento.');
+      const hasReview = payment.order.payments.some((item) => item.status === CommercialPaymentStatus.UNDER_REVIEW);
+      const result = await tx.commercialPayment.update({ where: { id: paymentId }, data: { status: CommercialPaymentStatus.REFUNDED, refundedBy: actor.id, refundedAt: new Date(), refundReason: dto.reason.trim() } });
+      await tx.order.update({ where: { id: payment.orderId }, data: { status: hasReview ? OrderStatus.PAYMENT_REVIEW : OrderStatus.PENDING_PAYMENT } });
+      return result;
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     await this.audit.record({ userId: actor.id, action: 'REFUND', entity: 'CommercialPayment', entityId: String(paymentId), metadata: { reason: dto.reason } });
     return updated;
   }

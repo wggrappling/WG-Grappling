@@ -63,6 +63,10 @@ export class ReviewPaymentDto {
   @IsString() @Length(3, 500) @IsOptional() notes?: string;
 }
 
+export class RejectPaymentDto {
+  @IsString() @Length(3, 500) notes: string;
+}
+
 export class CancelOrderDto {
   @IsString() @Length(3, 500) reason: string;
   @IsBoolean() confirmFinancialImpact: boolean;

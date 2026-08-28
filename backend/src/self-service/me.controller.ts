@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -225,6 +226,9 @@ export class MeController {
   @Post('orders')
   createOrder(@AuthenticatedContext() context: AuthenticatedUserContext, @Body() dto: SelfCheckoutDto) {
     this.accessPolicy.assertCapability(context, SelfServiceCapability.OPERATE);
+    if (dto.paymentMethod === 'PIX_MANUAL' || dto.paymentMethod === 'CREDIT_CARD_PHYSICAL') {
+      throw new BadRequestException('Pagamento manual ou físico deve ser informado pela recepção.');
+    }
     return this.operations.createSelfOrder(context.studentId, dto, { id: context.userId, role: context.role });
   }
 

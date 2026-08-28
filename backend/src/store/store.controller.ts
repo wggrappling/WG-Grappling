@@ -5,7 +5,7 @@ import { UserRole } from '../../generated/prisma/enums';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
-import { AddStoreVariantDto, CancelOrderDto, CreateStoreOrderDto, CreateStoreProductDto, ManualPaymentDto, RefundPaymentDto, ReviewPaymentDto, StockEntryDto, UpdateStoreOrderStatusDto, UpdateStoreProductDto } from './dto/store.dto';
+import { AddStoreVariantDto, CancelOrderDto, CreateStoreOrderDto, CreateStoreProductDto, ManualPaymentDto, RefundPaymentDto, RejectPaymentDto, ReviewPaymentDto, StockEntryDto, UpdateStoreOrderStatusDto, UpdateStoreProductDto } from './dto/store.dto';
 import { StoreService } from './store.service';
 
 type AuthRequest = { user: { id: number; role: UserRole } };
@@ -44,10 +44,8 @@ export class StoreController {
 
   @Get('customers') findCustomer(@Query('cpf') cpf: string) { return this.store.findCustomer(cpf ?? ''); }
   @Get('orders')
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
   listOrders() { return this.store.listOrders(); }
   @Get('orders/:id')
-  @Roles(UserRole.OWNER, UserRole.ADMIN)
   getOrder(@Param('id', ParseIntPipe) id: number) { return this.store.getOrder(id); }
   @Post('orders') createOrder(@Body() dto: CreateStoreOrderDto, @Request() req: AuthRequest) { return this.store.createReceptionOrder(dto, req.user); }
   @Post('orders/:id/payments/manual') submitPayment(@Param('id', ParseIntPipe) id: number, @Body() dto: ManualPaymentDto, @Request() req: AuthRequest) { return this.store.submitManualPayment(id, dto, req.user); }
@@ -59,6 +57,10 @@ export class StoreController {
   @Post('payments/:id/approve')
   @Roles(UserRole.OWNER, UserRole.ADMIN)
   approve(@Param('id', ParseIntPipe) id: number, @Body() dto: ReviewPaymentDto, @Request() req: AuthRequest) { return this.store.approvePayment(id, dto.notes, req.user); }
+
+  @Post('payments/:id/reject')
+  @Roles(UserRole.OWNER, UserRole.ADMIN)
+  reject(@Param('id', ParseIntPipe) id: number, @Body() dto: RejectPaymentDto, @Request() req: AuthRequest) { return this.store.rejectPayment(id, dto.notes, req.user); }
 
   @Post('payments/:id/refund')
   @Roles(UserRole.OWNER, UserRole.ADMIN)

@@ -123,4 +123,9 @@ describe('MeController', () => {
     expect(policy.assertCapability).toHaveBeenCalledWith(context, SelfServiceCapability.OPERATE);
     expect(store.addCartItem).toHaveBeenCalledWith(context, 9, 21, 2);
   });
+
+  it('does not let the student initiate manual or physical payments', async () => {
+    expect(() => controller.createOrder(context, { paymentMethod: 'PIX_MANUAL', paymentAmount: 10 } as never)).toThrow('deve ser informado pela recepção');
+    expect(operations.createSelfOrder).not.toHaveBeenCalled();
+  });
 });

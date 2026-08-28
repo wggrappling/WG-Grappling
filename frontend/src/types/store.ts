@@ -47,6 +47,8 @@ export type StoreOrder = Omit<StoreOrderSummary, 'itemCount'> & {
     subtotal: number;
     color: string | null;
     size: string | null;
+    madeToOrder: boolean;
+    leadTimeDays: number | null;
   }>;
   paid: number;
   balance: number;

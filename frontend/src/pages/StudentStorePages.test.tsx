@@ -107,12 +107,13 @@ describe('student store pages', () => {
   });
 
   it('translates made-to-order tracking and shows variation and payments', async () => {
-    mocked.order.mockResolvedValue({ id: 12, subtotal: 80, total: 80, paid: 30, balance: 50, status: 'IN_PRODUCTION', createdAt: '2026-08-27', items: [{ id: 1, productName: 'Kimono', quantity: 1, unitPrice: 80, subtotal: 80, color: 'Preto', size: 'M' }], payments: [{ id: 2, method: 'PIX_MANUAL', amount: 30, status: 'UNDER_REVIEW', createdAt: '2026-08-27' }] });
+    mocked.order.mockResolvedValue({ id: 12, subtotal: 80, total: 80, paid: 30, balance: 50, status: 'IN_PRODUCTION', createdAt: '2026-08-27', items: [{ id: 1, productName: 'Kimono', quantity: 1, unitPrice: 80, subtotal: 80, color: 'Preto', size: 'M', madeToOrder: true, leadTimeDays: 7 }], payments: [{ id: 2, method: 'PIX_MANUAL', amount: 30, status: 'UNDER_REVIEW', createdAt: '2026-08-27' }] });
     renderAt('/app/shop/orders/12', <StudentOrderPage />, '/app/shop/orders/:orderId');
     expect(await screen.findByText('Em fabricação')).toBeInTheDocument();
     expect(screen.getByText(/Preto · M/)).toBeInTheDocument();
     expect(screen.getByText('Pix manual')).toBeInTheDocument();
     expect(screen.getByText('Em análise')).toBeInTheDocument();
+    expect(screen.getByText('Prazo estimado: até 7 dias')).toBeInTheDocument();
   });
 
   it('renders a safe 403 state without stale store content', async () => {

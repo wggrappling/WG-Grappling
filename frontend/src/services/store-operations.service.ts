@@ -5,8 +5,8 @@ export type InternalStoreProduct = {
   madeToOrder: boolean; leadTimeDays: number; status: string; imageUrl: string | null;
   variants: Array<{ id: number; color: string; size: string; availableQuantity: number; minimumStock: number; latestUnitCost: number | null; stockState: string }>;
 };
-export type PaymentReview = { id: number; orderId: number; method: string; amount: string | number; justification: string; submittedAt: string; submitter: { name: string; role: string }; order: { total: string | number; student: { enrollmentNumber: string; person: { name: string } } } };
-export type InternalStoreOrder = { id: number; subtotal: number; total: number; paid: number; balance: number; status: string; createdAt: string; student: { enrollmentNumber: string; person: { name: string } }; items: Array<{ id: number; productName: string; color: string | null; size: string | null; madeToOrder: boolean; quantity: number; unitPrice: number; subtotal: number }>; payments: Array<{ id: number; method: string; amount: number; status: string; createdAt: string }> };
+export type PaymentReview = { id: number; orderId: number; method: string; amount: string | number; justification: string; submittedAt: string; submitter: { name: string; role: string }; order: { total: string | number; items: Array<{ productName: string; color: string | null; size: string | null; quantity: number }>; student: { enrollmentNumber: string; person: { name: string } } } };
+export type InternalStoreOrder = { id: number; subtotal: number; total: number; paid: number; balance: number; status: string; createdAt: string; student: { enrollmentNumber: string; person: { name: string } }; items: Array<{ id: number; productName: string; color: string | null; size: string | null; madeToOrder: boolean; leadTimeDays: number | null; quantity: number; unitPrice: number; subtotal: number }>; payments: Array<{ id: number; method: string; amount: number; status: string; createdAt: string }> };
 
 export const storeOperations = {
   products: () => httpService.get<InternalStoreProduct[]>('/store/products'),
@@ -21,6 +21,7 @@ export const storeOperations = {
   orders: () => httpService.get<InternalStoreOrder[]>('/store/orders'),
   order: (orderId: number) => httpService.get<InternalStoreOrder>(`/store/orders/${orderId}`),
   approve: (paymentId: number, notes?: string) => httpService.post(`/store/payments/${paymentId}/approve`, { notes }),
+  reject: (paymentId: number, notes: string) => httpService.post(`/store/payments/${paymentId}/reject`, { notes }),
   cancel: (orderId: number, reason: string, restock: boolean) => httpService.post(`/store/orders/${orderId}/cancel`, { reason, restock, confirmFinancialImpact: true }),
   refund: (paymentId: number, reason: string) => httpService.post(`/store/payments/${paymentId}/refund`, { reason, confirmFinancialImpact: true }),
   updateOrderStatus: (orderId: number, status: string) => httpService.patch(`/store/orders/${orderId}/status`, { status }),
