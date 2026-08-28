@@ -4,7 +4,7 @@ import { AuthContext, type AuthContextValue } from '../contexts/AuthContext';
 import { storeOperations } from '../services';
 import { StoreOperationsPage } from './StoreOperationsPage';
 
-vi.mock('../services', () => ({ storeOperations: { products: vi.fn(), reviews: vi.fn(), orders: vi.fn(), order: vi.fn(), createProduct: vi.fn(), updateProduct: vi.fn(), uploadProductImage: vi.fn(), addStock: vi.fn(), findCustomer: vi.fn(), createOrder: vi.fn(), submitManualPayment: vi.fn(), approve: vi.fn(), reject: vi.fn(), cancel: vi.fn(), refund: vi.fn(), updateOrderStatus: vi.fn() } }));
+vi.mock('../services', () => ({ storeOperations: { products: vi.fn(), productImage: vi.fn(), reviews: vi.fn(), orders: vi.fn(), order: vi.fn(), createProduct: vi.fn(), updateProduct: vi.fn(), uploadProductImage: vi.fn(), addStock: vi.fn(), findCustomer: vi.fn(), createOrder: vi.fn(), submitManualPayment: vi.fn(), approve: vi.fn(), reject: vi.fn(), cancel: vi.fn(), refund: vi.fn(), updateOrderStatus: vi.fn() } }));
 const mocked = vi.mocked(storeOperations);
 const auth = (role: 'OWNER' | 'ADMIN' | 'RECEPTION'): AuthContextValue => ({ user: { id: 1, name: 'Operador', email: 'op@example.com', role, active: true }, authenticated: true, initializing: false, login: vi.fn(), logout: vi.fn() });
 const renderRole = (role: 'OWNER' | 'ADMIN' | 'RECEPTION') => render(<AuthContext.Provider value={auth(role)}><StoreOperationsPage /></AuthContext.Provider>);
@@ -24,6 +24,18 @@ describe('StoreOperationsPage', () => {
     expect(screen.getByText('ESTOQUE ACABANDO')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Pagamentos em análise' }));
     expect(screen.getByRole('heading', { name: 'Pagamentos em análise' })).toBeInTheDocument();
+  });
+
+  it('shows protected product photos and lets ADMIN replace them', async () => {
+    mocked.products.mockResolvedValue([{ id: 3, name: 'Short', description: 'Treino', type: 'SHORTS', salePrice: 100, madeToOrder: false, leadTimeDays: 7, status: 'ACTIVE', imageUrl: '/store/products/3/image', variants: [{ id: 7, color: 'Preto', size: 'M', availableQuantity: 3, minimumStock: 5, latestUnitCost: 40, stockState: 'LOW_STOCK' }] }]);
+    mocked.productImage.mockResolvedValue(new Blob(['image'], { type: 'image/png' }));
+    mocked.uploadProductImage.mockResolvedValue({});
+    vi.stubGlobal('URL', { createObjectURL: vi.fn(() => 'blob:product-3'), revokeObjectURL: vi.fn() });
+    renderRole('ADMIN');
+    expect(await screen.findByAltText('Foto de Short')).toBeInTheDocument();
+    const file = new File(['image'], 'short.png', { type: 'image/png' });
+    fireEvent.change(screen.getByLabelText('Foto de Short'), { target: { files: [file] } });
+    await waitFor(() => expect(mocked.uploadProductImage).toHaveBeenCalledWith(3, file));
   });
 
   it('allows RECEPTION sales but hides product, stock and approval actions', async () => {

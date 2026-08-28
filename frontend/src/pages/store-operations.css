@@ -30,6 +30,10 @@
 .store-table-wrap table { width: 100%; border-collapse: collapse; }
 .store-table-wrap th, .store-table-wrap td { padding: .8rem; border-bottom: 1px solid var(--app-border); text-align: left; white-space: nowrap; }
 .store-table-wrap th { color: var(--muted); font-size: .75rem; text-transform: uppercase; }
+.store-admin-product-image, .store-image-placeholder { width: 3.5rem; height: 3.5rem; object-fit: cover; border-radius: .55rem; }
+.store-image-placeholder { display: grid; place-items: center; color: var(--muted); background: color-mix(in srgb, var(--store-accent) 10%, var(--app-surface)); font-weight: 800; }
+.store-image-upload { display: grid; gap: .2rem; margin-top: .35rem; color: var(--muted); font-size: .72rem; font-weight: 700; }
+.store-image-upload input { min-height: auto; padding: 0; border: 0; font-size: .72rem; }
 .store-badge { display: inline-flex; padding: .3rem .55rem; border-radius: 999px; color: #22513a; background: #e3f2e8; font-size: .72rem; font-weight: 800; }
 .store-badge.low_stock { color: #80520c; background: #fff0cf; }
 .store-badge.out_of_stock { color: #942b2b; background: #fde5e5; }

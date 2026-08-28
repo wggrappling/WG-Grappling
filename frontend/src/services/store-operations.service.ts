@@ -1,4 +1,5 @@
 import { httpService } from './http.service';
+import { apiClient } from '../api';
 
 export type InternalStoreProduct = {
   id: number; name: string; description: string; type: 'SHIRT' | 'SHORTS' | 'SET'; salePrice: number;
@@ -13,6 +14,7 @@ export const storeOperations = {
   createProduct: (body: unknown) => httpService.post<InternalStoreProduct, unknown>('/store/products', body),
   updateProduct: (productId: number, body: unknown) => httpService.patch(`/store/products/${productId}`, body),
   uploadProductImage: (productId: number, file: File) => { const body = new FormData(); body.append('file', file); return httpService.post(`/store/products/${productId}/image`, body); },
+  productImage: async (productId: number) => (await apiClient.get<Blob>(`/store/products/${productId}/image`, { responseType: 'blob' })).data,
   addStock: (variantId: number, quantity: number, unitCost: number) => httpService.post(`/store/variants/${variantId}/stock-entries`, { quantity, unitCost }),
   findCustomer: (cpf: string) => httpService.get<{ name: string; enrollmentNumber: string; status: string }>('/store/customers', { params: { cpf } }),
   createOrder: (body: unknown) => httpService.post<{ id: number; total: number; status: string }, unknown>('/store/orders', body),
