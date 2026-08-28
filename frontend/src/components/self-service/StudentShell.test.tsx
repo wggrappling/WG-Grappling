@@ -14,12 +14,12 @@ const value = (logout = vi.fn()): AuthContextValue => ({
 });
 
 describe('StudentShell', () => {
-  it('offers the seven approved primary destinations including Documents', () => {
+  it('offers the six approved primary destinations and keeps Documents secondary', () => {
     render(<AuthContext.Provider value={value()}><MemoryRouter initialEntries={['/app']}><Routes><Route path="/app" element={<StudentShell />}><Route index element={<p>Conteúdo</p>} /></Route></Routes></MemoryRouter></AuthContext.Provider>);
     expect(screen.getByRole('navigation', { name: 'Navegação principal do aluno' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Loja' })).toHaveAttribute('href', '/app/shop');
-    expect(screen.getByRole('link', { name: 'Documentos' })).toHaveAttribute('href', '/app/documents');
-    expect(screen.getAllByRole('link')).toHaveLength(8);
+    expect(screen.queryByRole('link', { name: 'Documentos' })).not.toBeInTheDocument();
+    expect(screen.getAllByRole('link')).toHaveLength(7);
   });
 
   it('logs out and returns to login', async () => {

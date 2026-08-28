@@ -20,6 +20,8 @@ vi.mock('../services', () => ({
     attendance: vi.fn(),
     finance: vi.fn(),
     schedule: vi.fn(),
+    notices: vi.fn(),
+    documents: vi.fn(),
   },
 }));
 
@@ -27,7 +29,15 @@ const mocked = vi.mocked(selfService);
 const renderPage = (page: React.ReactNode) => render(<MemoryRouter>{page}</MemoryRouter>);
 
 describe('student self-service pages', () => {
-  beforeEach(() => { vi.clearAllMocks(); mocked.schedule.mockResolvedValue({ next: null, upcoming: [] }); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocked.schedule.mockResolvedValue({ next: null, upcoming: [] });
+    mocked.notices.mockResolvedValue([]);
+    mocked.documents.mockResolvedValue([]);
+    mocked.graduations.mockResolvedValue({ current: [], history: [] });
+    mocked.modalities.mockResolvedValue({ current: [], history: [] });
+    mocked.finance.mockResolvedValue({ plans: { current: [], history: [] }, charges: [], payments: [], situation: { openChargeCount: 0, openBalance: 0, overdueChargeCount: 0, overdueBalance: 0, nextCharge: null } });
+  });
 
   it('loads /me and renders ACTIVE student navigation without internal IDs', async () => {
     mocked.me.mockResolvedValue({
@@ -38,7 +48,7 @@ describe('student self-service pages', () => {
     renderPage(<StudentHomePage />);
     expect(screen.getByText('Carregando suas informações...')).toBeInTheDocument();
     expect(await screen.findByText('Matrícula WG-44')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Graduação/ })).toHaveAttribute('href', '/app/graduation');
+    expect(screen.getByRole('link', { name: /graduação/i })).toHaveAttribute('href', '/app/graduation');
     expect(screen.queryByText('44')).not.toBeInTheDocument();
     expect(mocked.me).toHaveBeenCalledTimes(1);
     expect(await screen.findByText('Nenhuma próxima aula encontrada.')).toBeInTheDocument();

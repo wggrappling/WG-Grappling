@@ -8,7 +8,6 @@ const navigation = [
   { to: '/app/finance', label: 'Financeiro', icon: '$' },
   { to: '/app/shop', label: 'Loja', icon: '▣' },
   { to: '/app/notices', label: 'Avisos', icon: '●' },
-  { to: '/app/documents', label: 'Documentos', icon: '▤' },
   { to: '/app/profile', label: 'Perfil', icon: '○' },
 ] as const;
 
@@ -38,7 +37,7 @@ export function StudentShell() {
         <Outlet />
       </main>
 
-      <nav className="student-navigation student-navigation-seven" aria-label="Navegação principal do aluno">
+      <nav className="student-navigation" aria-label="Navegação principal do aluno">
         {navigation.map((item) => (
           <NavLink key={item.to} to={item.to} end={'end' in item ? item.end : false}>
             <span aria-hidden="true">{item.icon}</span>

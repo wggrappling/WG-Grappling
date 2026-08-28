@@ -147,7 +147,17 @@
 .student-notice-detail button { background: var(--student-accent); border: 0; border-radius: .75rem; color: white; cursor: pointer; min-height: 2.75rem; padding: .7rem 1rem; width: fit-content; }
 .student-notice-detail button:disabled { cursor: wait; opacity: .7; }
 .student-back-link { color: var(--student-text); min-height: 2.75rem; padding-block: .65rem; width: fit-content; }
-.student-navigation-seven { grid-template-columns: repeat(7, 1fr); }
+.student-dashboard-grid { display: grid; gap: .75rem; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 1rem; }
+.student-dashboard-grid .student-card { display: flex; flex-direction: column; min-height: 10rem; }
+.student-dashboard-grid h2 { font-size: 1rem; }
+.student-dashboard-grid p { margin: 0 0 1rem; }
+.student-dashboard-grid a { color: var(--student-accent); margin-top: auto; min-height: 2.75rem; padding-block: .65rem; width: fit-content; }
+.student-dashboard-state { color: var(--student-muted); }
+.student-dashboard-state button { background: transparent; border: 0; color: var(--student-accent); cursor: pointer; padding: .4rem 0; text-decoration: underline; }
+.student-home-shortcuts { display: grid; gap: .75rem; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 1rem; }
+.student-home-shortcuts a { background: var(--student-surface); border: 1px solid var(--student-border); border-radius: 1rem; color: var(--student-text); min-height: 4.75rem; padding: 1rem; text-decoration: none; }
+.student-home-shortcuts strong, .student-home-shortcuts span { display: block; }
+.student-home-shortcuts span { color: var(--student-muted); font-size: .82rem; margin-top: .3rem; }
 .student-document-list { display: grid; gap: .7rem; }
 .student-document-list article { align-items: center; background: var(--student-surface); border: 1px solid var(--student-border); border-radius: 1rem; display: grid; gap: .75rem; grid-template-columns: 1.5rem minmax(0, 1fr) auto; padding: .9rem; }
 .student-document-list a { color: var(--student-text); display: block; font-weight: 700; min-height: 2.75rem; overflow-wrap: anywhere; padding-block: .65rem; text-decoration: none; }
@@ -175,6 +185,7 @@
   .student-cart-actions { width: 100%; }
   .student-document-list article { align-items: start; grid-template-columns: 1.5rem minmax(0, 1fr); }
   .student-document-list .student-pill { grid-column: 2; }
+  .student-dashboard-grid { grid-template-columns: 1fr; }
   .store-selection, .store-order-summary dl { grid-template-columns: 1fr; }
 }
 
@@ -186,6 +197,7 @@
   .student-welcome { margin-top: 1.25rem; }
   .student-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .student-quick-links { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .student-dashboard-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (prefers-reduced-motion: reduce) { .student-spinner { animation: none; } }
