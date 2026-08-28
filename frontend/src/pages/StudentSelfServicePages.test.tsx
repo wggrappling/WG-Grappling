@@ -19,6 +19,7 @@ vi.mock('../services', () => ({
     modalities: vi.fn(),
     attendance: vi.fn(),
     finance: vi.fn(),
+    schedule: vi.fn(),
   },
 }));
 
@@ -26,7 +27,7 @@ const mocked = vi.mocked(selfService);
 const renderPage = (page: React.ReactNode) => render(<MemoryRouter>{page}</MemoryRouter>);
 
 describe('student self-service pages', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); mocked.schedule.mockResolvedValue({ next: null, upcoming: [] }); });
 
   it('loads /me and renders ACTIVE student navigation without internal IDs', async () => {
     mocked.me.mockResolvedValue({
@@ -40,6 +41,7 @@ describe('student self-service pages', () => {
     expect(screen.getByRole('link', { name: /Graduação/ })).toHaveAttribute('href', '/app/graduation');
     expect(screen.queryByText('44')).not.toBeInTheDocument();
     expect(mocked.me).toHaveBeenCalledTimes(1);
+    expect(await screen.findByText('Nenhuma próxima aula encontrada.')).toBeInTheDocument();
   });
 
   it('shows PAUSED as consultation-only without operation controls', async () => {

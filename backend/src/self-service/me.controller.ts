@@ -41,6 +41,8 @@ import { SelfNoticeService } from './self-notice.service';
 import { SelfNoticeProjectionDto } from './dto/self-notice-projection.dto';
 import { SelfDocumentService } from './self-document.service';
 import { SelfDocumentProjectionDto } from './dto/self-document-projection.dto';
+import { SelfScheduleService } from './self-schedule.service';
+import { SelfScheduleProjectionDto } from './dto/self-schedule-projection.dto';
 import {
   SelfServiceCapability,
   StudentAccessPolicy,
@@ -60,6 +62,7 @@ export class MeController {
     private readonly operations: StoreService,
     private readonly noticeService: SelfNoticeService,
     private readonly documentService: SelfDocumentService,
+    private readonly scheduleService: SelfScheduleService,
   ) {}
 
   @Get()
@@ -154,6 +157,12 @@ export class MeController {
     response.setHeader('Content-Disposition', `${disposition}; filename*=UTF-8''${encodeURIComponent(file.name)}`);
     response.setHeader('Content-Length', String(file.data.length));
     return new StreamableFile(file.data);
+  }
+
+  @Get('schedule')
+  @ApiOkResponse({ type: SelfScheduleProjectionDto })
+  getSchedule(@AuthenticatedContext() context: AuthenticatedUserContext) {
+    return this.scheduleService.getSchedule(context);
   }
 
   @Get('store/products')

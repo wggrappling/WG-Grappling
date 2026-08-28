@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ResourceState } from '../components/self-service/ResourceState';
 import { useSelfServiceResource } from '../hooks';
 import { selfService } from '../services';
+import { NextClassSection } from './StudentSchedulePage';
 
 const dateFormatter = new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' });
 const currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -38,6 +39,7 @@ export function StudentHomePage() {
           <h2>{resource.data.student.name}</h2>
           <p>Status acadêmico: <strong>{statusLabel[resource.data.student.status]}</strong></p>
         </section>
+        <NextClassSection />
         <section className="student-quick-links" aria-label="Acessos acadêmicos">
           <Link to="/app/graduation"><strong>Graduação</strong><span>Atual e histórico</span></Link>
           <Link to="/app/modalities"><strong>Modalidades</strong><span>Vínculos atuais e encerrados</span></Link>

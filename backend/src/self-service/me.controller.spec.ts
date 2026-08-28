@@ -11,6 +11,7 @@ import { StudentAccessPolicy } from './context/student-access.policy';
 import { StoreService } from '../store/store.service';
 import { SelfNoticeService } from './self-notice.service';
 import { SelfDocumentService } from './self-document.service';
+import { SelfScheduleService } from './self-schedule.service';
 
 describe('MeController', () => {
   const service = { getMe: jest.fn(), getProfile: jest.fn() };
@@ -29,6 +30,7 @@ describe('MeController', () => {
   const operations = { createSelfOrder: jest.fn(), getProductImage: jest.fn() };
   const notices = { getNotices: jest.fn(), getNotice: jest.fn(), markRead: jest.fn() };
   const documents = { getDocuments: jest.fn(), getDocument: jest.fn(), getFile: jest.fn() };
+  const schedule = { getSchedule: jest.fn() };
   const controller = new MeController(
     service as unknown as MeService,
     academic as unknown as SelfAcademicService,
@@ -37,6 +39,7 @@ describe('MeController', () => {
     operations as unknown as StoreService,
     notices as unknown as SelfNoticeService,
     documents as unknown as SelfDocumentService,
+    schedule as unknown as SelfScheduleService,
   );
   const context = {
     userId: 1,
@@ -98,6 +101,12 @@ describe('MeController', () => {
     await controller.getDocument(context, 12);
     expect(documents.getDocuments).toHaveBeenCalledWith(context);
     expect(documents.getDocument).toHaveBeenCalledWith(context, 12);
+  });
+
+  it('forwards only authenticated context to the schedule projection', async () => {
+    schedule.getSchedule.mockResolvedValue({ next: null, upcoming: [] });
+    await controller.getSchedule(context);
+    expect(schedule.getSchedule).toHaveBeenCalledWith(context);
   });
 
   it('requires operational capability before a cart mutation', async () => {

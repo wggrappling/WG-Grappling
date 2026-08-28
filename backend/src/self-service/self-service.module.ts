@@ -11,6 +11,7 @@ import { StoreModule } from '../store/store.module';
 import { SelfNoticeService } from './self-notice.service';
 import { DocumentsModule } from '../documents/documents.module';
 import { SelfDocumentService } from './self-document.service';
+import { SelfScheduleService } from './self-schedule.service';
 
 @Module({
   imports: [PrismaModule, StoreModule, DocumentsModule],
@@ -21,6 +22,7 @@ import { SelfDocumentService } from './self-document.service';
     SelfStoreService,
     SelfNoticeService,
     SelfDocumentService,
+    SelfScheduleService,
     StudentAccessPolicy,
     StudentContextResolver,
     StudentContextGuard,

@@ -8,6 +8,7 @@ import type {
   SelfProfile,
   SelfNotice,
   SelfDocument,
+  SelfSchedule,
 } from '../types/self-service';
 import type { StoreCart, StoreOrder, StoreOrderSummary, StoreProduct } from '../types/store';
 import { apiClient } from '../api';
@@ -34,6 +35,7 @@ export const selfService = {
     const response = await apiClient.get<Blob>(`/me/documents/${documentId}/download`, { params: { download }, responseType: 'blob' });
     return response.data;
   },
+  schedule: () => httpService.get<SelfSchedule>('/me/schedule'),
   storeProducts: () => httpService.get<StoreProduct[]>('/me/store/products'),
   storeProduct: (productId: number) => httpService.get<StoreProduct>(`/me/store/products/${productId}`),
   cart: () => httpService.get<StoreCart>('/me/cart'),

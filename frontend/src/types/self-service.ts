@@ -122,3 +122,6 @@ export type SelfDocument = {
   size: number;
   available: boolean;
 };
+
+export type SelfScheduleClass = { date: string; startTime: string; endTime: string; className: string; modalityName: string };
+export type SelfSchedule = { next: SelfScheduleClass | null; upcoming: SelfScheduleClass[] };
