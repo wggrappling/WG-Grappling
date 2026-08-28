@@ -39,6 +39,8 @@ import { StoreService } from '../store/store.service';
 import { SelfStoreService } from './self-store.service';
 import { SelfNoticeService } from './self-notice.service';
 import { SelfNoticeProjectionDto } from './dto/self-notice-projection.dto';
+import { SelfDocumentService } from './self-document.service';
+import { SelfDocumentProjectionDto } from './dto/self-document-projection.dto';
 import {
   SelfServiceCapability,
   StudentAccessPolicy,
@@ -57,6 +59,7 @@ export class MeController {
     private readonly accessPolicy: StudentAccessPolicy,
     private readonly operations: StoreService,
     private readonly noticeService: SelfNoticeService,
+    private readonly documentService: SelfDocumentService,
   ) {}
 
   @Get()
@@ -121,6 +124,36 @@ export class MeController {
     @Param('id', ParseIntPipe) noticeId: number,
   ) {
     return this.noticeService.markRead(context, noticeId);
+  }
+
+  @Get('documents')
+  @ApiOkResponse({ type: SelfDocumentProjectionDto, isArray: true })
+  getDocuments(@AuthenticatedContext() context: AuthenticatedUserContext) {
+    return this.documentService.getDocuments(context);
+  }
+
+  @Get('documents/:id')
+  @ApiOkResponse({ type: SelfDocumentProjectionDto })
+  getDocument(
+    @AuthenticatedContext() context: AuthenticatedUserContext,
+    @Param('id', ParseIntPipe) documentId: number,
+  ) {
+    return this.documentService.getDocument(context, documentId);
+  }
+
+  @Get('documents/:id/download')
+  async getDocumentFile(
+    @AuthenticatedContext() context: AuthenticatedUserContext,
+    @Param('id', ParseIntPipe) documentId: number,
+    @Query('download') download: string | undefined,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    const file = await this.documentService.getFile(context, documentId);
+    const disposition = download === 'true' || !file.inline ? 'attachment' : 'inline';
+    response.setHeader('Content-Type', file.mimeType);
+    response.setHeader('Content-Disposition', `${disposition}; filename*=UTF-8''${encodeURIComponent(file.name)}`);
+    response.setHeader('Content-Length', String(file.data.length));
+    return new StreamableFile(file.data);
   }
 
   @Get('store/products')

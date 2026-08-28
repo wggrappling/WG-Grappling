@@ -111,3 +111,13 @@ export type SelfNotice = {
   publishedAt: string;
   isRead: boolean;
 };
+
+export type SelfDocument = {
+  id: number;
+  name: string;
+  type: 'PHOTO' | 'MEDICAL_CERTIFICATE' | 'CONTRACT' | 'CERTIFICATE' | 'LGPD' | 'OTHER';
+  status: 'ACTIVE' | 'ARCHIVED';
+  createdAt: string;
+  size: number;
+  available: boolean;
+};

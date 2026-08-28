@@ -7,8 +7,10 @@ import type {
   ModalitiesProjection,
   SelfProfile,
   SelfNotice,
+  SelfDocument,
 } from '../types/self-service';
 import type { StoreCart, StoreOrder, StoreOrderSummary, StoreProduct } from '../types/store';
+import { apiClient } from '../api';
 
 export const selfService = {
   me: () => httpService.get<MeProjection>('/me'),
@@ -26,6 +28,12 @@ export const selfService = {
   notices: () => httpService.get<SelfNotice[]>('/me/notices'),
   notice: (noticeId: number) => httpService.get<SelfNotice>(`/me/notices/${noticeId}`),
   markNoticeRead: (noticeId: number) => httpService.post<SelfNotice, Record<string, never>>(`/me/notices/${noticeId}/read`, {}),
+  documents: () => httpService.get<SelfDocument[]>('/me/documents'),
+  document: (documentId: number) => httpService.get<SelfDocument>(`/me/documents/${documentId}`),
+  async documentFile(documentId: number, download = false) {
+    const response = await apiClient.get<Blob>(`/me/documents/${documentId}/download`, { params: { download }, responseType: 'blob' });
+    return response.data;
+  },
   storeProducts: () => httpService.get<StoreProduct[]>('/me/store/products'),
   storeProduct: (productId: number) => httpService.get<StoreProduct>(`/me/store/products/${productId}`),
   cart: () => httpService.get<StoreCart>('/me/cart'),

@@ -31,6 +31,7 @@ import {
   StudentStorePage,
 } from './pages/StudentStorePages';
 import { StudentNoticePage, StudentNoticesPage } from './pages/StudentNoticesPages';
+import { StudentDocumentPage, StudentDocumentsPage } from './pages/StudentDocumentsPages';
 
 const internalRoles = ['OWNER', 'ADMIN', 'RECEPTION', 'TEACHER'] as const;
 
@@ -59,6 +60,8 @@ function App() {
         <Route path="shop/orders/:orderId" element={<StudentOrderPage />} />
         <Route path="notices" element={<StudentNoticesPage />} />
         <Route path="notices/:noticeId" element={<StudentNoticePage />} />
+        <Route path="documents" element={<StudentDocumentsPage />} />
+        <Route path="documents/:documentId" element={<StudentDocumentPage />} />
       </Route>
       <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN', 'RECEPTION']}><DashboardPage /></ProtectedRoute>} />
       <Route path="/reports" element={<ProtectedRoute allowedRoles={['OWNER', 'ADMIN', 'RECEPTION']}><ReportsPage /></ProtectedRoute>} />

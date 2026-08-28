@@ -9,15 +9,18 @@ import { SelfAcademicService } from './self-academic.service';
 import { SelfStoreService } from './self-store.service';
 import { StoreModule } from '../store/store.module';
 import { SelfNoticeService } from './self-notice.service';
+import { DocumentsModule } from '../documents/documents.module';
+import { SelfDocumentService } from './self-document.service';
 
 @Module({
-  imports: [PrismaModule, StoreModule],
+  imports: [PrismaModule, StoreModule, DocumentsModule],
   controllers: [MeController],
   providers: [
     MeService,
     SelfAcademicService,
     SelfStoreService,
     SelfNoticeService,
+    SelfDocumentService,
     StudentAccessPolicy,
     StudentContextResolver,
     StudentContextGuard,

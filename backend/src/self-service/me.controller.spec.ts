@@ -9,6 +9,8 @@ import { SelfAcademicService } from './self-academic.service';
 import { SelfStoreService } from './self-store.service';
 import { StudentAccessPolicy } from './context/student-access.policy';
 import { StoreService } from '../store/store.service';
+import { SelfNoticeService } from './self-notice.service';
+import { SelfDocumentService } from './self-document.service';
 
 describe('MeController', () => {
   const service = { getMe: jest.fn(), getProfile: jest.fn() };
@@ -25,12 +27,16 @@ describe('MeController', () => {
   };
   const policy = { assertCapability: jest.fn() };
   const operations = { createSelfOrder: jest.fn(), getProductImage: jest.fn() };
+  const notices = { getNotices: jest.fn(), getNotice: jest.fn(), markRead: jest.fn() };
+  const documents = { getDocuments: jest.fn(), getDocument: jest.fn(), getFile: jest.fn() };
   const controller = new MeController(
     service as unknown as MeService,
     academic as unknown as SelfAcademicService,
     store as unknown as SelfStoreService,
     policy as unknown as StudentAccessPolicy,
     operations as unknown as StoreService,
+    notices as unknown as SelfNoticeService,
+    documents as unknown as SelfDocumentService,
   );
   const context = {
     userId: 1,
@@ -83,6 +89,15 @@ describe('MeController', () => {
     await controller.getOrders(context);
     expect(store.getCart).toHaveBeenCalledWith(context);
     expect(store.getOrders).toHaveBeenCalledWith(context);
+  });
+
+  it('forwards only authenticated context and resource id for document reads', async () => {
+    documents.getDocuments.mockResolvedValue([]);
+    documents.getDocument.mockResolvedValue({ id: 12 });
+    await controller.getDocuments(context);
+    await controller.getDocument(context, 12);
+    expect(documents.getDocuments).toHaveBeenCalledWith(context);
+    expect(documents.getDocument).toHaveBeenCalledWith(context, 12);
   });
 
   it('requires operational capability before a cart mutation', async () => {

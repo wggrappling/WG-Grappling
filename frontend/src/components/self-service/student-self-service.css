@@ -131,6 +131,21 @@
 .student-notice-detail button { background: var(--student-accent); border: 0; border-radius: .75rem; color: white; cursor: pointer; min-height: 2.75rem; padding: .7rem 1rem; width: fit-content; }
 .student-notice-detail button:disabled { cursor: wait; opacity: .7; }
 .student-back-link { color: var(--student-text); min-height: 2.75rem; padding-block: .65rem; width: fit-content; }
+.student-navigation-seven { grid-template-columns: repeat(7, 1fr); }
+.student-document-list { display: grid; gap: .7rem; }
+.student-document-list article { align-items: center; background: var(--student-surface); border: 1px solid var(--student-border); border-radius: 1rem; display: grid; gap: .75rem; grid-template-columns: 1.5rem minmax(0, 1fr) auto; padding: .9rem; }
+.student-document-list a { color: var(--student-text); display: block; font-weight: 700; min-height: 2.75rem; overflow-wrap: anywhere; padding-block: .65rem; text-decoration: none; }
+.student-document-list small { color: var(--student-muted); display: block; }
+.student-document-icon { color: var(--student-accent); font-size: 1.35rem; }
+.student-document-detail { display: grid; gap: 1rem; max-width: 46rem; }
+.student-document-detail h2 { margin: 0; overflow-wrap: anywhere; }
+.student-document-detail dl { display: grid; gap: .75rem; margin: 0; }
+.student-document-detail dl div { border-bottom: 1px solid var(--student-border); padding-bottom: .65rem; }
+.student-document-detail dt { color: var(--student-muted); font-size: .8rem; }
+.student-document-detail dd { margin: .2rem 0 0; }
+.student-document-actions { display: flex; flex-wrap: wrap; gap: .65rem; }
+.student-document-actions button { background: var(--student-accent); border: 0; border-radius: .75rem; color: white; cursor: pointer; min-height: 2.75rem; padding: .7rem 1rem; }
+.student-document-actions .student-button-secondary { background: transparent; border: 1px solid var(--student-border); color: var(--student-text); }
 .student-app :focus-visible { outline: 3px solid var(--student-accent); outline-offset: 3px; }
 @keyframes student-spin { to { transform: rotate(360deg); } }
 
@@ -142,6 +157,8 @@
   .student-grid-two, .student-filters { grid-template-columns: 1fr; }
   .student-list article { align-items: flex-start; flex-direction: column; }
   .student-cart-actions { width: 100%; }
+  .student-document-list article { align-items: start; grid-template-columns: 1.5rem minmax(0, 1fr); }
+  .student-document-list .student-pill { grid-column: 2; }
   .store-selection, .store-order-summary dl { grid-template-columns: 1fr; }
 }
 
